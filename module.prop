@@ -1,6 +1,6 @@
 id=sortify
 name=Sortify
-version=4.3.1
-versionCode=15
+version=4.3.2
+versionCode=16
 author=xCaptaiN09
-description=Auto-sorts downloads into categorized folders. NEW: Native WebUI for easy config. v4.3.1: Magisk module detection. v4.3: Recursive scanning, auto-exclusion, custom exclusions. Works with Magisk and KernelSU.
+description=Auto-sorts downloads into categorized folders. NEW in v4.3.2: Native WebUI for easy config. v4.3.1: Magisk module detection. v4.3: Recursive scanning, auto-exclusion, custom exclusions. Works with Magisk and KernelSU.
