@@ -300,65 +300,41 @@
             let debugInfo = "=== DEBUG ksu.exec ===\n";
             
             try {
-                // Method 1: Original author's approach - just cat with destructuring
-                debugInfo += "Method 1 (original author's cat):\n";
-                const execResult = await ksu.exec(`cat "${CONFIG_PATH}"`);
-                debugInfo += "Full result: " + JSON.stringify(execResult, null, 2) + "\n";
-                debugInfo += "typeof: " + typeof execResult + "\n";
+                // Use tr to read JSON as single line (ksu.exec returns only last line with plain cat)
+                debugInfo += "Reading config with tr (single line)...\n";
+                const result = await ksu.exec(`cat "${CONFIG_PATH}" | tr '\\n' ' '`);
+                debugInfo += "Result type: " + typeof result + "\n";
+                debugInfo += "Result length: " + (typeof result === 'string' ? result.length : 'N/A') + " chars\n";
                 
                 let jsonText = '';
                 
-                // Try destructuring like original
-                if (execResult && execResult.stdout) {
-                    debugInfo += "stdout exists: " + execResult.stdout.length + " chars\n";
-                    debugInfo += "stdout value: " + execResult.stdout + "\n";
-                    jsonText = execResult.stdout;
-                } else if (typeof execResult === 'string') {
-                    debugInfo += "Direct string result: " + execResult.length + " chars\n";
-                    debugInfo += "String value: " + execResult + "\n";
-                    jsonText = execResult;
+                // Handle string or object with stdout
+                if (typeof result === 'string') {
+                    jsonText = result.trim();
+                } else if (result && result.stdout) {
+                    jsonText = result.stdout.trim();
+                } else if (result && result.out) {
+                    jsonText = result.out.trim();
                 } else {
-                    debugInfo += "Unexpected format, trying fallback...\n";
+                    throw new Error("Unexpected result format");
                 }
                 
-                // If still only getting "}", try tr to replace newlines
-                if (!jsonText || jsonText.trim() === '}') {
-                    debugInfo += "\nMethod 2 (tr newlines):\n";
-                    const trResult = await ksu.exec(`cat "${CONFIG_PATH}" | tr '\\n' ' '`);
-                    debugInfo += "tr result: " + JSON.stringify(trResult) + "\n";
-                    jsonText = (typeof trResult === 'string') ? trResult : (trResult?.stdout || '');
-                }
+                debugInfo += "JSON length: " + jsonText.length + " chars\n";
+                debugInfo += "First 50 chars: " + jsonText.substring(0, 50) + "...\n";
                 
-                // If still fails, try single line JSON
-                if (!jsonText || jsonText.trim() === '}') {
-                    debugInfo += "\nMethod 3 (awk single line):\n";
-                    const awkResult = await ksu.exec(`awk 'BEGIN{ORS=""} {print}' "${CONFIG_PATH}"`);
-                    debugInfo += "awk result: " + JSON.stringify(awkResult) + "\n";
-                    jsonText = (typeof awkResult === 'string') ? awkResult : (awkResult?.stdout || '');
-                }
-                
-                debugInfo += "\nFinal jsonText:\n";
-                debugInfo += jsonText + "\n";
-                debugInfo += "======================\n";
-                document.getElementById('debug-info').textContent = debugInfo;
-                
-                if (!jsonText || jsonText.trim() === '') {
-                    throw new Error("Unable to read config");
-                }
-
-                // Check if we got valid content
-                if (!jsonText || jsonText.trim() === '') {
+                if (!jsonText || jsonText === '') {
                     throw new Error("Config file is empty");
                 }
 
-                const config = JSON.parse(jsonText.trim());
-
-                debugInfo += "\n✅ Config parsed successfully!\n";
-                debugInfo += "Config content:\n" + JSON.stringify(config, null, 2);
+                const config = JSON.parse(jsonText);
+                
+                debugInfo += "======================\n";
+                debugInfo += "✅ Config loaded successfully!\n\n";
+                debugInfo += "Parsed config:\n" + JSON.stringify(config, null, 2);
                 document.getElementById('debug-info').textContent = debugInfo;
 
                 // Populate form fields
-                document.getElementById('interval').value = config.interval || 300;
+                document.getElementById('interval').value = config.interval || 1000;
                 document.getElementById('base_path').value = config.base_path || '/sdcard/Sortify';
                 document.getElementById('download_path').value = config.download_path || '/sdcard/Download';
                 document.getElementById('recursive').checked = config.recursive || false;
