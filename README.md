@@ -146,7 +146,6 @@ You can force a sort immediately without waiting for the timer:
 
 * **Original Module:** [xCaptaiN09](https://github.com/xCaptaiN09) - Sortify v4.0
 * **Fork Maintainer:** [MeteorBurn](https://github.com/MeteorBurn) - v4.3.0
-* **Volume Key Detection:** Adapted from [AshReXcue](https://github.com/AshReXcue) - Bootloop Protector v9.4
 * **Powered by:** BusyBox, Android Shell, KernelSU WebUI
 
 [![GitHub release](https://img.shields.io/github/v/release/MeteorBurn/Sortify)](https://github.com/MeteorBurn/Sortify/releases)
