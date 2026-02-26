@@ -300,10 +300,31 @@
             let debugInfo = "=== DEBUG ksu.exec ===\n";
             
             try {
-                const result = await ksu.exec(`cat "${CONFIG_PATH}" 2>&1`);
-                
-                // Build debug info
+                // Method 1: Try using 'while read' loop to capture all lines
+                let result = await ksu.exec(`while IFS= read -r line || [ -n "$line" ]; do echo "$line"; done < "${CONFIG_PATH}"`);
+                debugInfo += "Method 1 (while read loop):\n";
                 debugInfo += "result value: " + JSON.stringify(result, null, 2) + "\n";
+                debugInfo += "result length: " + (typeof result === 'string' ? result.length : 'N/A') + "\n";
+                
+                // If method 1 failed or returned just "}", try method 2
+                if (!result || result === '}' || (typeof result === 'string' && result.trim() === '}')) {
+                    debugInfo += "\nMethod 2 (base64 encoding):\n";
+                    result = await ksu.exec(`base64 < "${CONFIG_PATH}"`);
+                    debugInfo += "base64 result: " + result + "\n";
+                    
+                    if (result && typeof result === 'string' && result.trim() !== '') {
+                        // Decode base64
+                        try {
+                            const decoded = atob(result.trim());
+                            debugInfo += "decoded: " + decoded + "\n";
+                            result = decoded;
+                        } catch (e) {
+                            debugInfo += "base64 decode error: " + e.message + "\n";
+                        }
+                    }
+                }
+                
+                debugInfo += "\nFinal result:\n";
                 debugInfo += "typeof result: " + typeof result + "\n";
                 debugInfo += "is null: " + (result === null) + "\n";
                 debugInfo += "is undefined: " + (result === undefined) + "\n";
@@ -321,7 +342,7 @@
                 let jsonText = '';
                 if (result === undefined || result === null) {
                     throw new Error("ksu.exec returned " + result);
-                } else if (typeof result === 'string' && result !== 'undefined') {
+                } else if (typeof result === 'string' && result !== 'undefined' && result !== '}') {
                     jsonText = result;
                 } else if (result && typeof result.stdout === 'string') {
                     jsonText = result.stdout;
