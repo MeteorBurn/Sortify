@@ -1,55 +1,48 @@
 #!/system/bin/sh
 # Sortify v4.3.2 Install Script
 
-# Volume key detection function
+# Volume key detection function (adapted from Bootloop Protector)
 chooseport() {
-    local timeout=$1
-    [ -z "$timeout" ] && timeout=30
+    local timeout_seconds=${1:-30}
+    local attempts=$((timeout_seconds / 6))  # 6 seconds per attempt
+    [ $attempts -lt 1 ] && attempts=1
+    
+    if [ -z "$TMPDIR" ]; then TMPDIR=/data/local/tmp; fi
+    mkdir -p "$TMPDIR"
     
     ui_print "   Listening for volume keys..."
+    ui_print "   Press Vol+ or Vol- within ${timeout_seconds} seconds..."
     
-    # Start getevent in background and capture its output
-    local VKEYS_TEMP="/dev/.sortify_volkey"
-    rm -f "$VKEYS_TEMP"
-    
-    # Run getevent in background
-    (getevent -lqc 100 2>&1 | grep -E 'KEY_VOLUME(UP|DOWN).*DOWN' > "$VKEYS_TEMP") &
-    local getevent_pid=$!
-    
-    local count=0
-    while [ $count -lt $timeout ]; do
-        # Check if we got a volume key press
-        if [ -f "$VKEYS_TEMP" ] && [ -s "$VKEYS_TEMP" ]; then
-            local key=$(head -n 1 "$VKEYS_TEMP")
+    local attempt_count=0
+    while [ $attempt_count -lt $attempts ]; do
+        local count=0
+        while [ $count -lt 12 ]; do
+            timeout 3 /system/bin/getevent -lqc 1 2>&1 > "$TMPDIR/events" &
+            sleep 0.5
+            count=$((count + 1))
             
-            # Kill background getevent
-            kill $getevent_pid 2>/dev/null
-            rm -f "$VKEYS_TEMP"
-            
-            # Check which key was pressed
-            if echo "$key" | grep -q "KEY_VOLUMEUP"; then
-                ui_print "   ✓ Vol UP detected!"
-                return 0
-            elif echo "$key" | grep -q "KEY_VOLUMEDOWN"; then
-                ui_print "   ✓ Vol DOWN detected!"
-                return 1
+            if [ -f "$TMPDIR/events" ]; then
+                if grep -q 'KEY_VOLUMEUP *DOWN' "$TMPDIR/events"; then
+                    ui_print "   ✓ Vol UP detected!"
+                    rm -f "$TMPDIR/events"
+                    return 0
+                elif grep -q 'KEY_VOLUMEDOWN *DOWN' "$TMPDIR/events"; then
+                    ui_print "   ✓ Vol DOWN detected!"
+                    rm -f "$TMPDIR/events"
+                    return 1
+                fi
             fi
-        fi
+        done
         
-        count=$((count + 1))
-        sleep 1
-        
-        # Show countdown every 10 seconds
-        if [ $((count % 10)) -eq 0 ] && [ $count -lt $timeout ]; then
-            ui_print "   ... $((timeout - count)) seconds remaining"
+        attempt_count=$((attempt_count + 1))
+        if [ $attempt_count -lt $attempts ]; then
+            local remaining=$((timeout_seconds - (attempt_count * 6)))
+            ui_print "   ... no input yet, $remaining seconds remaining"
         fi
     done
     
-    # Cleanup
-    kill $getevent_pid 2>/dev/null
-    rm -f "$VKEYS_TEMP"
-    
     ui_print "   ⏱️ Timeout - using default (disabled)"
+    rm -f "$TMPDIR/events"
     return 1
 }
 
