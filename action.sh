@@ -99,7 +99,7 @@ IMG_EXT="jpg jpeg png gif bmp webp heic heif svg"
 VID_EXT="mp4 mkv avi mov webm flv mpeg mpg 3gp"
 AUD_EXT="mp3 m4a flac wav ogg opus aac wma"
 ARC_EXT="zip rar 7z tar gz bz2 iso"
-APP_EXT="apk xapk"
+APP_EXT="apk xapk apks"
 
 # Check if ZIP is a Magisk module
 is_magisk_module() {
