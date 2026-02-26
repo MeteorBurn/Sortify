@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Sortify v4.3.2 - Sort Action
+# Sortify v4.3.0 - Sort Action
 
 MODDIR=${0%/*}
 CONFIG="$MODDIR/config.json"
