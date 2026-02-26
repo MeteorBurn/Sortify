@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Sortify v4.2 Service - JSON Config Version
+# Sortify v4.3.0 Service - JSON Config Version
 
 MODDIR=${0%/*}
 CONFIG="$MODDIR/config.json"
@@ -15,6 +15,16 @@ get_json_value() {
     fi
 }
 
+# Parse JSON boolean
+get_json_bool() {
+    raw=$(grep "\"$1\"" "$CONFIG" | cut -d: -f2- | sed 's/^ *//' | sed 's/,.*$//')
+    if echo "$raw" | grep -qi "true"; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
 # Wait for storage to be ready
 wait_until_storage() {
     until [ -d "/sdcard" ]; do
@@ -26,19 +36,35 @@ wait_until_storage
 # Main loop
 (
     while true; do
+        # Check if module is enabled
+        ENABLED=$(get_json_bool "enabled")
+        
+        if [ "$ENABLED" = "false" ]; then
+            # Module disabled - wait and check again
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Module disabled in config. Waiting..." >> "$LOG"
+            sleep 30
+            continue
+        fi
+        
         # Read config values
         INTERVAL=$(get_json_value "interval")
         BASE_PATH=$(get_json_value "base_path")
         DOWNLOAD_PATH=$(get_json_value "download_path")
+        RECURSIVE=$(get_json_bool "recursive")
+        MAX_DEPTH=$(get_json_value "max_depth")
 
         # Defaults if empty
         INTERVAL="${INTERVAL:-300}"
         BASE_PATH="${BASE_PATH:-/sdcard/Sortify}"
         DOWNLOAD_PATH="${DOWNLOAD_PATH:-/sdcard/Download}"
+        RECURSIVE="${RECURSIVE:-false}"
+        MAX_DEPTH="${MAX_DEPTH:-5}"
 
         # Export for action.sh
         export BASE_PATH
         export DOWNLOAD_PATH
+        export RECURSIVE
+        export MAX_DEPTH
 
         # Run sort
         sh "$MODDIR/action.sh" >> "$LOG" 2>&1

@@ -1,5 +1,9 @@
 {
-    "interval": 300,
+    "enabled": false,
+    "interval": 1000,
     "base_path": "/sdcard/Sortify",
-    "download_path": "/sdcard/Download"
+    "download_path": "/sdcard/Download",
+    "recursive": true,
+    "max_depth": 5,
+    "exclude_folders": ["WhatsApp", "Music", "Screenshots"]
 }

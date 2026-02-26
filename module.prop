@@ -1,6 +1,6 @@
 id=sortify
 name=Sortify
-version=4.2
-versionCode=12
-author=xCaptaiN09
-description=Auto-sorts downloads into categorized folders. Edit config.json to customize: interval, base_path, download_path. Works with Magisk and KernelSU.
+version=4.3.0
+versionCode=25
+author=xCaptaiN09 (fork by MeteorBurn)
+description=Auto-sorts downloads into categorized folders. NEW: Native WebUI with on/off toggle, live log viewer, volume key setup. Recursive scanning, auto-exclusion, custom exclusions. Works with Magisk and KernelSU.

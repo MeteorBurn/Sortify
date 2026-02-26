@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Sortify v4.0 Uninstaller - by xCaptaiN09
+# Sortify v4.3.2 Uninstaller - by xCaptaiN09
 
 BASE="/sdcard/Sortify"
 LOG="$BASE/sortify.log"
