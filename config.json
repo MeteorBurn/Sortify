@@ -2,7 +2,7 @@
     "interval": 300,
     "base_path": "/sdcard/Sortify",
     "download_path": "/sdcard/Download",
-    "recursive": true,
+    "recursive": false,
     "max_depth": 5,
-    "exclude_folders": [".thumbnails", ".nomedia", "WhatsApp"]
+    "exclude_folders": []
 }
