@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>Sortify v4.3.1</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #bb86fc;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .header .version {
+            color: #888;
+            font-size: 14px;
+        }
+        .card { 
+            background: #1e1e1e;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            color: #bb86fc;
+            font-size: 18px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0b0b0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        label .hint {
+            color: #666;
+            font-size: 12px;
+            font-weight: normal;
+            margin-left: 4px;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.2s;
+        }
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #bb86fc;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            line-height: 1.5;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #2c2c2c;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #bb86fc;
+        }
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #bb86fc 0%, #9d6dd9 100%);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+        .info-item {
+            background: #252525;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #bb86fc;
+        }
+        .info-item .category {
+            color: #bb86fc;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .info-item .extensions {
+            color: #999;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        .badge {
+            display: inline-block;
+            background: #bb86fc;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        #toast.error {
+            background-color: #cf6679;
+        }
+        @keyframes fadein {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 30px; opacity: 1; }
+        }
+        @keyframes fadeout {
+            from { bottom: 30px; opacity: 1; }
+            to { bottom: 0; opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>📁 Sortify</h1>
+            <div class="version">v4.3.1 Configuration</div>
+        </div>
+
+        <div class="card">
+            <h2>⚙️ General Settings</h2>
+            
+            <div class="form-group">
+                <label>Sort Interval <span class="hint">(seconds)</span></label>
+                <input type="number" id="interval" placeholder="300" min="10" step="10">
+            </div>
+
+            <div class="form-group">
+                <label>Base Path <span class="hint">(where to sort files)</span></label>
+                <input type="text" id="base_path" placeholder="/sdcard/Sortify">
+            </div>
+
+            <div class="form-group">
+                <label>Download Path <span class="hint">(source folder)</span></label>
+                <input type="text" id="download_path" placeholder="/sdcard/Download">
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔍 Recursive Scanning <span class="badge">v4.3</span></h2>
+            
+            <div class="form-group">
+                <div class="checkbox-group" onclick="document.getElementById('recursive').click()">
+                    <input type="checkbox" id="recursive">
+                    <label>Enable recursive folder scanning</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Max Depth <span class="hint">(folder depth limit)</span></label>
+                <input type="number" id="max_depth" placeholder="5" min="1" max="10">
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🚫 Exclude Folders <span class="badge">v4.3</span></h2>
+            
+            <div class="form-group">
+                <label>Folder Names <span class="hint">(one per line)</span></label>
+                <textarea id="exclude_folders" placeholder="WhatsApp&#10;Telegram&#10;Screenshots"></textarea>
+            </div>
+        </div>
+
+        <button onclick="saveConfig()">💾 Save Configuration</button>
+
+        <div class="card" style="margin-top: 20px;">
+            <h2>📂 File Categories</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="category">📄 Documents</div>
+                    <div class="extensions">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">🖼️ Images</div>
+                    <div class="extensions">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">🎬 Videos</div>
+                    <div class="extensions">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">🎵 Audio</div>
+                    <div class="extensions">mp3, m4a, flac, wav, ogg, opus, aac, wma</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">📦 Archives</div>
+                    <div class="extensions">zip*, rar, 7z, tar, gz, bz2, iso</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">📱 Apps</div>
+                    <div class="extensions">apk, xapk</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">🧩 Magisk <span class="badge">v4.3.1</span></div>
+                    <div class="extensions">zip files with module.prop</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">📋 Others</div>
+                    <div class="extensions">all other files</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">♻️ Duplicates</div>
+                    <div class="extensions">files with name conflicts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">Settings Saved!</div>
+
+    <script>
+        const CONFIG_PATH = "/data/adb/modules/sortify/config.json";
+
+        // Load config when page loads
+        async function loadConfig() {
+            try {
+                const { stdout } = await ksu.exec(`cat "${CONFIG_PATH}"`);
+                const config = JSON.parse(stdout);
+
+                // Populate form fields
+                document.getElementById('interval').value = config.interval || 300;
+                document.getElementById('base_path').value = config.base_path || '/sdcard/Sortify';
+                document.getElementById('download_path').value = config.download_path || '/sdcard/Download';
+                document.getElementById('recursive').checked = config.recursive || false;
+                document.getElementById('max_depth').value = config.max_depth || 5;
+                
+                // Handle exclude_folders array
+                if (config.exclude_folders && Array.isArray(config.exclude_folders)) {
+                    document.getElementById('exclude_folders').value = config.exclude_folders.join('\n');
+                }
+            } catch (e) {
+                console.error("Read Error:", e);
+                showToast("Error loading config: " + e, true);
+            }
+        }
+
+        // Save config
+        async function saveConfig() {
+            try {
+                // Get form values
+                const interval = parseInt(document.getElementById('interval').value) || 300;
+                const base_path = document.getElementById('base_path').value.trim() || '/sdcard/Sortify';
+                const download_path = document.getElementById('download_path').value.trim() || '/sdcard/Download';
+                const recursive = document.getElementById('recursive').checked;
+                const max_depth = parseInt(document.getElementById('max_depth').value) || 5;
+                
+                // Parse exclude_folders (split by newline, filter empty)
+                const exclude_text = document.getElementById('exclude_folders').value;
+                const exclude_folders = exclude_text
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                // Build config object
+                const config = {
+                    interval,
+                    base_path,
+                    download_path,
+                    recursive,
+                    max_depth,
+                    exclude_folders
+                };
+
+                // Convert to JSON with proper formatting
+                const jsonString = JSON.stringify(config, null, 4);
+
+                // Write to file using cat with heredoc to handle special characters
+                const escapedJson = jsonString.replace(/\$/g, '\\$').replace(/`/g, '\\`');
+                await ksu.exec(`cat > "${CONFIG_PATH}" << 'EOFCONFIG'\n${jsonString}\nEOFCONFIG`);
+
+                showToast("✅ Configuration saved successfully!", false);
+            } catch (e) {
+                console.error("Write Error:", e);
+                showToast("❌ Error saving config: " + e, true);
+            }
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.className = isError ? "show error" : "show";
+            setTimeout(function() {
+                toast.className = toast.className.replace("show", "");
+            }, 3000);
+        }
+
+        // Initialize
+        if (typeof ksu !== 'undefined') {
+            loadConfig();
+        } else {
+            // Fallback for browser testing
+            console.log("Not in KernelSU environment");
+            document.getElementById('interval').value = 300;
+            document.getElementById('base_path').value = '/sdcard/Sortify';
+            document.getElementById('download_path').value = '/sdcard/Download';
+            document.getElementById('recursive').checked = true;
+            document.getElementById('max_depth').value = 5;
+            document.getElementById('exclude_folders').value = 'WhatsApp\nTelegram\nScreenshots';
+        }
+    </script>
+
+</body>
+</html>
