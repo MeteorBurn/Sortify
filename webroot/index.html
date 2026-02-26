@@ -240,6 +240,13 @@
 
         <button onclick="saveConfig()">💾 Save Configuration</button>
 
+        <div class="card" style="margin-top: 20px; background: #2c1810; border: 1px solid #ff6b6b;">
+            <h2 style="color: #ff6b6b;">🐛 Debug Info (для отладки)</h2>
+            <div id="debug-info" style="background: #1a1a1a; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;">
+                Загрузка...
+            </div>
+        </div>
+
         <div class="card" style="margin-top: 20px;">
             <h2>📂 File Categories</h2>
             <div class="info-grid">
@@ -290,19 +297,25 @@
 
         // Load config when page loads
         async function loadConfig() {
+            let debugInfo = "=== DEBUG ksu.exec ===\n";
+            
             try {
                 const result = await ksu.exec(`cat "${CONFIG_PATH}" 2>&1`);
-                console.log("=== DEBUG ksu.exec ===");
-                console.log("result:", result);
-                console.log("typeof:", typeof result);
-                console.log("is null:", result === null);
-                console.log("is undefined:", result === undefined);
+                
+                // Build debug info
+                debugInfo += "result value: " + JSON.stringify(result, null, 2) + "\n";
+                debugInfo += "typeof result: " + typeof result + "\n";
+                debugInfo += "is null: " + (result === null) + "\n";
+                debugInfo += "is undefined: " + (result === undefined) + "\n";
+                
                 if (result && typeof result === 'object') {
-                    console.log("keys:", Object.keys(result));
-                    console.log("stdout:", result.stdout);
-                    console.log("out:", result.out);
+                    debugInfo += "object keys: " + Object.keys(result).join(', ') + "\n";
+                    debugInfo += "result.stdout: " + JSON.stringify(result.stdout) + "\n";
+                    debugInfo += "result.out: " + JSON.stringify(result.out) + "\n";
                 }
-                console.log("======================");
+                
+                debugInfo += "======================\n";
+                document.getElementById('debug-info').textContent = debugInfo;
                 
                 // Handle different result formats
                 let jsonText = '';
@@ -325,6 +338,10 @@
 
                 const config = JSON.parse(jsonText.trim());
 
+                debugInfo += "\n✅ Config parsed successfully!\n";
+                debugInfo += "Config content:\n" + JSON.stringify(config, null, 2);
+                document.getElementById('debug-info').textContent = debugInfo;
+
                 // Populate form fields
                 document.getElementById('interval').value = config.interval || 300;
                 document.getElementById('base_path').value = config.base_path || '/sdcard/Sortify';
@@ -337,9 +354,10 @@
                     document.getElementById('exclude_folders').value = config.exclude_folders.join('\n');
                 }
             } catch (e) {
-                console.error("Read Error:", e);
-                // Don't show error toast on load - use default values instead
-                console.log("Using default values");
+                debugInfo += "\n❌ ERROR: " + e.message + "\n";
+                debugInfo += "Error stack: " + (e.stack || "no stack") + "\n";
+                document.getElementById('debug-info').textContent = debugInfo;
+                
                 // Set defaults silently
                 document.getElementById('interval').value = 300;
                 document.getElementById('base_path').value = '/sdcard/Sortify';
