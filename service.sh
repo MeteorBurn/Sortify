@@ -15,6 +15,16 @@ get_json_value() {
     fi
 }
 
+# Parse JSON boolean
+get_json_bool() {
+    raw=$(grep "\"$1\"" "$CONFIG" | cut -d: -f2- | sed 's/^ *//' | sed 's/,.*$//')
+    if echo "$raw" | grep -qi "true"; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
 # Wait for storage to be ready
 wait_until_storage() {
     until [ -d "/sdcard" ]; do
@@ -30,15 +40,21 @@ wait_until_storage
         INTERVAL=$(get_json_value "interval")
         BASE_PATH=$(get_json_value "base_path")
         DOWNLOAD_PATH=$(get_json_value "download_path")
+        RECURSIVE=$(get_json_bool "recursive")
+        MAX_DEPTH=$(get_json_value "max_depth")
 
         # Defaults if empty
         INTERVAL="${INTERVAL:-300}"
         BASE_PATH="${BASE_PATH:-/sdcard/Sortify}"
         DOWNLOAD_PATH="${DOWNLOAD_PATH:-/sdcard/Download}"
+        RECURSIVE="${RECURSIVE:-false}"
+        MAX_DEPTH="${MAX_DEPTH:-5}"
 
         # Export for action.sh
         export BASE_PATH
         export DOWNLOAD_PATH
+        export RECURSIVE
+        export MAX_DEPTH
 
         # Run sort
         sh "$MODDIR/action.sh" >> "$LOG" 2>&1

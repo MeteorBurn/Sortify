@@ -1,5 +1,8 @@
 {
     "interval": 300,
     "base_path": "/sdcard/Sortify",
-    "download_path": "/sdcard/Download"
+    "download_path": "/sdcard/Download",
+    "recursive": true,
+    "max_depth": 5,
+    "exclude_folders": [".thumbnails", ".nomedia", "WhatsApp"]
 }
