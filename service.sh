@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Sortify v4.3.2 Service - JSON Config Version
+# Sortify v4.3.0 Service - JSON Config Version
 
 MODDIR=${0%/*}
 CONFIG="$MODDIR/config.json"

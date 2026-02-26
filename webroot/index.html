@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-    <title>Sortify v4.3.2</title>
+    <title>Sortify v4.3.0</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -191,7 +191,7 @@
     <div class="container">
         <div class="header">
             <h1>📁 Sortify</h1>
-            <div class="version">v4.3.2 Configuration</div>
+            <div class="version">v4.3.0 Configuration</div>
         </div>
 
         <div class="card" style="border: 2px solid #bb86fc;">
@@ -259,7 +259,7 @@
             <p style="color: #888; font-size: 12px; margin-bottom: 12px;">
                 Live log of sorting activity (last 200 lines)
             </p>
-            <div id="log-viewer" style="background: #1a1a1a; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; color: #a0a0a0;">
+            <div id="log-viewer" style="background: #1a1a1a; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-wrap: break-word; min-height: 400px; max-height: 600px; overflow-y: scroll; color: #a0a0a0; line-height: 1.4;">
                 Loading log...
             </div>
             <div style="display: flex; gap: 10px; margin-top: 12px;">
@@ -450,8 +450,8 @@
             try {
                 logViewer.textContent = "Loading log...";
                 
-                // Read log file using tr to get single line, then replace spaces back to newlines
-                const result = await ksu.exec(`[ -f "${LOG_PATH}" ] && cat "${LOG_PATH}" || echo "No log file found yet. Module will create it after first run."`);
+                // Use while read loop to capture all lines properly
+                const result = await ksu.exec(`if [ -f "${LOG_PATH}" ]; then while IFS= read -r line || [ -n "$line" ]; do echo "$line"; done < "${LOG_PATH}"; else echo "No log file found yet. Module will create it after first run."; fi`);
                 
                 let logText = '';
                 if (typeof result === 'string') {

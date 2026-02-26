@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Sortify v4.3.2 Install Script
+# Sortify v4.3.0 Install Script
 
 # Volume key detection function (adapted from Bootloop Protector)
 chooseport() {
@@ -46,7 +46,7 @@ chooseport() {
     return 1
 }
 
-ui_print "- Installing Sortify v4.3.2"
+ui_print "- Installing Sortify v4.3.0"
 
 # Read config values
 CONFIG="$MODPATH/config.json"
@@ -74,7 +74,7 @@ set_perm "$MODPATH/uninstall.sh" 0 0 0755
 
 ui_print ""
 ui_print "========================================="
-ui_print "  Sortify v4.3.2 Installed!"
+ui_print "  Sortify v4.3.0 Installed!"
 ui_print "========================================="
 ui_print ""
 ui_print "  📋 Enable auto-sorting now?"
@@ -107,10 +107,12 @@ fi
 ui_print ""
 ui_print "  Config file: /data/adb/modules/sortify/config.json"
 ui_print ""
-ui_print "  NEW in v4.3.2:"
-ui_print "    ✓ Native WebUI for easy configuration!"
-ui_print "    ✓ Access via KsuWebUI or WebUI X"
+ui_print "  NEW Features (Fork by MeteorBurn):"
+ui_print "    ✓ Native WebUI for easy configuration"
+ui_print "    ✓ Live log viewer with clear function"
+ui_print "    ✓ Volume key setup on installation"
 ui_print "    ✓ Enable/disable module on-the-fly"
+ui_print "    ✓ Access via KsuWebUI or WebUI X"
 ui_print ""
 ui_print "  Settings available:"
 ui_print "    - enabled: turn module on/off"
