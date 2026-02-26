@@ -1,0 +1,5 @@
+{
+    "interval": 300,
+    "base_path": "/sdcard/Sortify",
+    "download_path": "/sdcard/Download"
+}

@@ -1,0 +1,57 @@
+#!/system/bin/sh
+# Sortify v4.2 Service - JSON Config Version
+
+MODDIR=${0%/*}
+CONFIG="$MODDIR/config.json"
+LOG="$MODDIR/sortify.log"
+
+# Parse JSON value (handles both "string" and number)
+get_json_value() {
+    raw=$(grep "\"$1\"" "$CONFIG" | cut -d: -f2- | sed 's/^ *//')
+    if echo "$raw" | grep -q '^"'; then
+        echo "$raw" | sed 's/^"\([^"]*\)".*/\1/'
+    else
+        echo "$raw" | sed 's/[^0-9]//g'
+    fi
+}
+
+# Wait for storage to be ready
+wait_until_storage() {
+    until [ -d "/sdcard" ]; do
+        sleep 5
+    done
+}
+wait_until_storage
+
+# Main loop
+(
+    while true; do
+        # Read config values
+        INTERVAL=$(get_json_value "interval")
+        BASE_PATH=$(get_json_value "base_path")
+        DOWNLOAD_PATH=$(get_json_value "download_path")
+
+        # Defaults if empty
+        INTERVAL="${INTERVAL:-300}"
+        BASE_PATH="${BASE_PATH:-/sdcard/Sortify}"
+        DOWNLOAD_PATH="${DOWNLOAD_PATH:-/sdcard/Download}"
+
+        # Export for action.sh
+        export BASE_PATH
+        export DOWNLOAD_PATH
+
+        # Run sort
+        sh "$MODDIR/action.sh" >> "$LOG" 2>&1
+
+        # Log heartbeat
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Cycle done. Next in ${INTERVAL}s" >> "$LOG"
+
+        # Keep log small
+        tail -n 200 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+
+        # Copy log to base_path for easy access
+        cp "$LOG" "$BASE_PATH/sortify.log" 2>/dev/null
+
+        sleep "$INTERVAL"
+    done
+) &

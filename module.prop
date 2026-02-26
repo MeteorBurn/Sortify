@@ -1,0 +1,6 @@
+id=sortify
+name=Sortify
+version=4.2
+versionCode=12
+author=xCaptaiN09
+description=Auto-sorts downloads into categorized folders. Edit config.json to customize: interval, base_path, download_path. Works with Magisk and KernelSU.

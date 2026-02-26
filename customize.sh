@@ -1,0 +1,42 @@
+#!/system/bin/sh
+# Sortify v4.2 Install Script
+
+ui_print "- Installing Sortify v4.2"
+
+# Read config values
+CONFIG="$MODPATH/config.json"
+if [ -f "$CONFIG" ]; then
+    BASE_PATH=$(grep '"base_path"' "$CONFIG" | sed 's/.*: *"\([^"]*\)".*/\1/')
+fi
+BASE_PATH="${BASE_PATH:-/sdcard/Sortify}"
+
+ui_print "- Creating folders at: $BASE_PATH"
+mkdir -p "$BASE_PATH/Documents"
+mkdir -p "$BASE_PATH/Images"
+mkdir -p "$BASE_PATH/Videos"
+mkdir -p "$BASE_PATH/Audio"
+mkdir -p "$BASE_PATH/Archives"
+mkdir -p "$BASE_PATH/Apps"
+mkdir -p "$BASE_PATH/Others"
+mkdir -p "$BASE_PATH/Duplicates"
+
+ui_print "- Setting permissions..."
+set_perm_recursive "$MODPATH" 0 0 0755 0644
+set_perm "$MODPATH/service.sh" 0 0 0755
+set_perm "$MODPATH/action.sh" 0 0 0755
+set_perm "$MODPATH/uninstall.sh" 0 0 0755
+
+ui_print ""
+ui_print "========================================="
+ui_print "  Sortify v4.2 Installed!"
+ui_print "========================================="
+ui_print ""
+ui_print "  Config file: /data/adb/modules/sortify/config.json"
+ui_print ""
+ui_print "  Edit config.json to change:"
+ui_print "    - interval: seconds between sorts"
+ui_print "    - base_path: where to create Sortify folders"
+ui_print "    - download_path: folder to sort from"
+ui_print ""
+ui_print "  Reboot to start the service!"
+ui_print "========================================="
