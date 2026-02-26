@@ -291,8 +291,27 @@
         // Load config when page loads
         async function loadConfig() {
             try {
-                const { stdout } = await ksu.exec(`cat "${CONFIG_PATH}"`);
-                const config = JSON.parse(stdout);
+                const result = await ksu.exec(`cat "${CONFIG_PATH}"`);
+                console.log("ksu.exec result:", result);
+                
+                // Handle different result formats
+                let jsonText = '';
+                if (typeof result === 'string') {
+                    jsonText = result;
+                } else if (result && result.stdout) {
+                    jsonText = result.stdout;
+                } else if (result && result.out) {
+                    jsonText = result.out;
+                } else {
+                    throw new Error("Unable to read config file");
+                }
+
+                // Check if we got valid content
+                if (!jsonText || jsonText.trim() === '') {
+                    throw new Error("Config file is empty");
+                }
+
+                const config = JSON.parse(jsonText.trim());
 
                 // Populate form fields
                 document.getElementById('interval').value = config.interval || 300;
@@ -307,7 +326,15 @@
                 }
             } catch (e) {
                 console.error("Read Error:", e);
-                showToast("Error loading config: " + e, true);
+                // Don't show error toast on load - use default values instead
+                console.log("Using default values");
+                // Set defaults silently
+                document.getElementById('interval').value = 300;
+                document.getElementById('base_path').value = '/sdcard/Sortify';
+                document.getElementById('download_path').value = '/sdcard/Download';
+                document.getElementById('recursive').checked = true;
+                document.getElementById('max_depth').value = 5;
+                document.getElementById('exclude_folders').value = 'WhatsApp\nTelegram\nScreenshots';
             }
         }
 
