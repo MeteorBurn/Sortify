@@ -450,16 +450,28 @@
             try {
                 logViewer.textContent = "Loading log...";
                 
-                // Use while read loop to capture all lines properly
-                const result = await ksu.exec(`if [ -f "${LOG_PATH}" ]; then while IFS= read -r line || [ -n "$line" ]; do echo "$line"; done < "${LOG_PATH}"; else echo "No log file found yet. Module will create it after first run."; fi`);
+                // Use base64 encoding to read entire file as single line, then decode
+                // This works around ksu.exec only returning last line of output
+                const result = await ksu.exec(`if [ -f "${LOG_PATH}" ]; then tail -n 200 "${LOG_PATH}" | base64 | tr -d '\\n'; else echo "Tm8gbG9nIGZpbGUgZm91bmQgeWV0LiBNb2R1bGUgd2lsbCBjcmVhdGUgaXQgYWZ0ZXIgZmlyc3QgcnVuLg=="; fi`);
                 
                 let logText = '';
-                if (typeof result === 'string') {
-                    logText = result;
-                } else if (result && result.stdout) {
-                    logText = result.stdout;
-                } else {
-                    logText = "Unable to read log file";
+                try {
+                    // Extract result string
+                    let base64String = '';
+                    if (typeof result === 'string') {
+                        base64String = result.trim();
+                    } else if (result && result.stdout) {
+                        base64String = result.stdout.trim();
+                    }
+                    
+                    if (base64String) {
+                        // Decode from base64
+                        logText = atob(base64String);
+                    } else {
+                        logText = "Unable to read log file";
+                    }
+                } catch (decodeError) {
+                    logText = "Error decoding log: " + decodeError.message;
                 }
                 
                 if (logText.trim() === '') {
