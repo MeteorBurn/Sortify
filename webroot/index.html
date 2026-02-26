@@ -194,6 +194,20 @@
             <div class="version">v4.3.2 Configuration</div>
         </div>
 
+        <div class="card" style="border: 2px solid #bb86fc;">
+            <h2>🔌 Module Status</h2>
+            
+            <div class="form-group">
+                <div class="checkbox-group" onclick="document.getElementById('enabled').click()" style="background: #2a1a3a; border: 1px solid #bb86fc;">
+                    <input type="checkbox" id="enabled">
+                    <label style="color: #bb86fc; font-weight: bold;">Enable Auto-Sorting</label>
+                </div>
+                <p style="color: #888; font-size: 12px; margin-top: 8px; margin-left: 4px;">
+                    ⚠️ Module is disabled by default. Check this box to start automatic file sorting.
+                </p>
+            </div>
+        </div>
+
         <div class="card">
             <h2>⚙️ General Settings</h2>
             
@@ -334,6 +348,7 @@
                 document.getElementById('debug-info').textContent = debugInfo;
 
                 // Populate form fields
+                document.getElementById('enabled').checked = config.enabled || false;
                 document.getElementById('interval').value = config.interval || 1000;
                 document.getElementById('base_path').value = config.base_path || '/sdcard/Sortify';
                 document.getElementById('download_path').value = config.download_path || '/sdcard/Download';
@@ -350,6 +365,7 @@
                 document.getElementById('debug-info').textContent = debugInfo;
                 
                 // Set defaults silently
+                document.getElementById('enabled').checked = false;
                 document.getElementById('interval').value = 1000;
                 document.getElementById('base_path').value = '/sdcard/Sortify';
                 document.getElementById('download_path').value = '/sdcard/Download';
@@ -363,7 +379,8 @@
         async function saveConfig() {
             try {
                 // Get form values
-                const interval = parseInt(document.getElementById('interval').value) || 300;
+                const enabled = document.getElementById('enabled').checked;
+                const interval = parseInt(document.getElementById('interval').value) || 1000;
                 const base_path = document.getElementById('base_path').value.trim() || '/sdcard/Sortify';
                 const download_path = document.getElementById('download_path').value.trim() || '/sdcard/Download';
                 const recursive = document.getElementById('recursive').checked;
@@ -378,6 +395,7 @@
 
                 // Build config object
                 const config = {
+                    enabled,
                     interval,
                     base_path,
                     download_path,
@@ -415,6 +433,7 @@
         } else {
             // Fallback for browser testing
             console.log("Not in KernelSU environment");
+            document.getElementById('enabled').checked = false;
             document.getElementById('interval').value = 1000;
             document.getElementById('base_path').value = '/sdcard/Sortify';
             document.getElementById('download_path').value = '/sdcard/Download';

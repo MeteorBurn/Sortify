@@ -36,6 +36,16 @@ wait_until_storage
 # Main loop
 (
     while true; do
+        # Check if module is enabled
+        ENABLED=$(get_json_bool "enabled")
+        
+        if [ "$ENABLED" = "false" ]; then
+            # Module disabled - wait and check again
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Module disabled in config. Waiting..." >> "$LOG"
+            sleep 30
+            continue
+        fi
+        
         # Read config values
         INTERVAL=$(get_json_value "interval")
         BASE_PATH=$(get_json_value "base_path")

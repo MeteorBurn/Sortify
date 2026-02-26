@@ -1,4 +1,5 @@
 {
+    "enabled": false,
     "interval": 1000,
     "base_path": "/sdcard/Sortify",
     "download_path": "/sdcard/Download",
