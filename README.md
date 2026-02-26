@@ -21,11 +21,19 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * **📂 Smart Categories:** Sorts Documents, Images, Videos, Audio, Archives, Apps, Magisk modules
 * **🛡️ Integrity Protection:** Skips hidden/incomplete files (`.crdownload`, `.partial`, `.tmp`)
 * **🗂️ Duplicate Detection:** Automatically moves duplicate files to `/sdcard/Sortify/Duplicates`
-* **♻️ Recursive Scanning:** Scans subfolders with configurable depth
-* **🚫 Folder Exclusions:** Skip specific folders like WhatsApp, Telegram, etc.
 * **🪶 Lightweight:** 100% offline, uses native system resources
 
 ### 🆕 New in Fork v4.3.0 (MeteorBurn):
+* **♻️ Recursive Scanning:** Scans subfolders with configurable depth
+* **🚫 Folder Exclusions:** Skip specific folders like WhatsApp, Telegram, etc.
+* **🌐 Enhanced WebUI:** Full-featured web interface with all settings
+* **📋 Live Log Viewer:** View sorting activity logs in real-time with refresh/clear buttons
+* **⌨️ Volume Key Setup:** Choose enable/disable during installation (Vol UP/DOWN)
+* **🔌 Enable/Disable Toggle:** Turn module on/off without rebooting
+* **⚙️ Advanced Configuration:** Interval, paths, recursion, depth, exclusions - all in WebUI
+* **🎨 Modern Dark UI:** Beautiful responsive design optimized for mobile
+* **📱 KsuWebUI/WebUI X:** Works natively without separate web server
+* **🐛 Debug Panel:** Hidden debug info for troubleshooting (optional)
 * **🌐 Enhanced WebUI:** Full-featured web interface with all settings
 * **📋 Live Log Viewer:** View sorting activity logs in real-time with refresh/clear buttons
 * **⌨️ Volume Key Setup:** Choose enable/disable during installation (Vol UP/DOWN)
