@@ -199,7 +199,7 @@
             
             <div class="form-group">
                 <label>Sort Interval <span class="hint">(seconds)</span></label>
-                <input type="number" id="interval" placeholder="300" min="10" step="10">
+                <input type="number" id="interval" placeholder="1000" min="10" step="10">
             </div>
 
             <div class="form-group">
@@ -234,7 +234,7 @@
             
             <div class="form-group">
                 <label>Folder Names <span class="hint">(one per line)</span></label>
-                <textarea id="exclude_folders" placeholder="WhatsApp&#10;Telegram&#10;Screenshots"></textarea>
+                <textarea id="exclude_folders" placeholder="WhatsApp&#10;Music&#10;Screenshots"></textarea>
             </div>
         </div>
 
@@ -359,12 +359,12 @@
                 document.getElementById('debug-info').textContent = debugInfo;
                 
                 // Set defaults silently
-                document.getElementById('interval').value = 300;
+                document.getElementById('interval').value = 1000;
                 document.getElementById('base_path').value = '/sdcard/Sortify';
                 document.getElementById('download_path').value = '/sdcard/Download';
                 document.getElementById('recursive').checked = true;
                 document.getElementById('max_depth').value = 5;
-                document.getElementById('exclude_folders').value = 'WhatsApp\nTelegram\nScreenshots';
+                document.getElementById('exclude_folders').value = 'WhatsApp\nMusic\nScreenshots';
             }
         }
 
@@ -424,12 +424,12 @@
         } else {
             // Fallback for browser testing
             console.log("Not in KernelSU environment");
-            document.getElementById('interval').value = 300;
+            document.getElementById('interval').value = 1000;
             document.getElementById('base_path').value = '/sdcard/Sortify';
             document.getElementById('download_path').value = '/sdcard/Download';
             document.getElementById('recursive').checked = true;
             document.getElementById('max_depth').value = 5;
-            document.getElementById('exclude_folders').value = 'WhatsApp\nTelegram\nScreenshots';
+            document.getElementById('exclude_folders').value = 'WhatsApp\nMusic\nScreenshots';
         }
     </script>
 
