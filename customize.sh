@@ -1,6 +1,58 @@
 #!/system/bin/sh
 # Sortify v4.3.2 Install Script
 
+# Volume key detection function
+chooseport() {
+    local timeout=$1
+    [ -z "$timeout" ] && timeout=30
+    
+    ui_print "   Listening for volume keys..."
+    
+    # Start getevent in background and capture its output
+    local VKEYS_TEMP="/dev/.sortify_volkey"
+    rm -f "$VKEYS_TEMP"
+    
+    # Run getevent in background
+    (getevent -lqc 100 2>&1 | grep -E 'KEY_VOLUME(UP|DOWN).*DOWN' > "$VKEYS_TEMP") &
+    local getevent_pid=$!
+    
+    local count=0
+    while [ $count -lt $timeout ]; do
+        # Check if we got a volume key press
+        if [ -f "$VKEYS_TEMP" ] && [ -s "$VKEYS_TEMP" ]; then
+            local key=$(head -n 1 "$VKEYS_TEMP")
+            
+            # Kill background getevent
+            kill $getevent_pid 2>/dev/null
+            rm -f "$VKEYS_TEMP"
+            
+            # Check which key was pressed
+            if echo "$key" | grep -q "KEY_VOLUMEUP"; then
+                ui_print "   ✓ Vol UP detected!"
+                return 0
+            elif echo "$key" | grep -q "KEY_VOLUMEDOWN"; then
+                ui_print "   ✓ Vol DOWN detected!"
+                return 1
+            fi
+        fi
+        
+        count=$((count + 1))
+        sleep 1
+        
+        # Show countdown every 10 seconds
+        if [ $((count % 10)) -eq 0 ] && [ $count -lt $timeout ]; then
+            ui_print "   ... $((timeout - count)) seconds remaining"
+        fi
+    done
+    
+    # Cleanup
+    kill $getevent_pid 2>/dev/null
+    rm -f "$VKEYS_TEMP"
+    
+    ui_print "   ⏱️ Timeout - using default (disabled)"
+    return 1
+}
+
 ui_print "- Installing Sortify v4.3.2"
 
 # Read config values
