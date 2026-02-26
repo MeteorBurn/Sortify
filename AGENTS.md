@@ -122,7 +122,7 @@ Images/    : jpg, jpeg, png, gif, bmp, webp, heic, heif, svg
 Videos/    : mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp
 Audio/     : mp3, m4a, flac, wav, ogg, opus, aac, wma
 Archives/  : zip, rar, 7z, tar, gz, bz2, iso (кроме модулей Magisk)
-Apps/      : apk, xapk
+Apps/      : apk, xapk, apks
 Magisk/    : zip-файлы с module.prop внутри (новое в v4.3.0)
 Others/    : все остальные файлы
 Duplicates/: файлы с конфликтующими именами
