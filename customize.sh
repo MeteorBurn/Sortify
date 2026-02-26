@@ -1,7 +1,7 @@
 #!/system/bin/sh
-# Sortify v4.2 Install Script
+# Sortify v4.3.1 Install Script
 
-ui_print "- Installing Sortify v4.2"
+ui_print "- Installing Sortify v4.3.1"
 
 # Read config values
 CONFIG="$MODPATH/config.json"
@@ -29,7 +29,7 @@ set_perm "$MODPATH/uninstall.sh" 0 0 0755
 
 ui_print ""
 ui_print "========================================="
-ui_print "  Sortify v4.3 Installed!"
+ui_print "  Sortify v4.3.1 Installed!"
 ui_print "========================================="
 ui_print ""
 ui_print "  Config file: /data/adb/modules/sortify/config.json"
@@ -42,11 +42,13 @@ ui_print "    - recursive: enable/disable recursive scan"
 ui_print "    - max_depth: max folder depth (if recursive)"
 ui_print "    - exclude_folders: folders to skip"
 ui_print ""
-ui_print "  NEW in v4.3:"
+ui_print "  NEW in v4.3.1:"
+ui_print "    ✓ Auto-detect Magisk modules (new!)"
+ui_print ""
+ui_print "  Features from v4.3:"
 ui_print "    ✓ Recursive folder scanning"
 ui_print "    ✓ Auto-exclude base_path"
 ui_print "    ✓ Custom folder exclusions"
-ui_print "    ✓ Auto-detect Magisk modules"
 ui_print ""
 ui_print "  Reboot to start the service!"
 ui_print "========================================="

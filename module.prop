@@ -1,6 +1,6 @@
 id=sortify
 name=Sortify
-version=4.3
-versionCode=13
+version=4.3.1
+versionCode=14
 author=xCaptaiN09
-description=Auto-sorts downloads into categorized folders. NEW: Recursive scanning, auto-exclusion of base_path, custom folder exclusions. Edit config.json to customize. Works with Magisk and KernelSU.
+description=Auto-sorts downloads into categorized folders. NEW in v4.3.1: Magisk module detection. NEW in v4.3: Recursive scanning, auto-exclusion of base_path, custom folder exclusions. Edit config.json to customize. Works with Magisk and KernelSU.
