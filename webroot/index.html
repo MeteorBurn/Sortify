@@ -254,7 +254,22 @@
 
         <button onclick="saveConfig()">💾 Save Configuration</button>
 
-        <div class="card" style="margin-top: 20px; background: #2c1810; border: 1px solid #ff6b6b;">
+        <div class="card" style="margin-top: 20px;">
+            <h2>📋 Sortify Log</h2>
+            <p style="color: #888; font-size: 12px; margin-bottom: 12px;">
+                Live log of sorting activity (last 200 lines)
+            </p>
+            <div id="log-viewer" style="background: #1a1a1a; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; color: #a0a0a0;">
+                Loading log...
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button onclick="loadLog()" style="flex: 1; background: #4a9eff;">🔄 Refresh Log</button>
+                <button onclick="clearLog()" style="flex: 1; background: #ff6b6b;">🗑️ Clear Log</button>
+            </div>
+        </div>
+
+        <!-- Debug panel - hidden by default. To enable: remove display:none -->
+        <div class="card" style="margin-top: 20px; background: #2c1810; border: 1px solid #ff6b6b; display: none;">
             <h2 style="color: #ff6b6b;">🐛 Debug Info (для отладки)</h2>
             <div id="debug-info" style="background: #1a1a1a; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;">
                 Загрузка...
@@ -427,9 +442,59 @@
             }, 3000);
         }
 
+        // Load log file
+        async function loadLog() {
+            const LOG_PATH = "/data/adb/modules/sortify/sortify.log";
+            const logViewer = document.getElementById('log-viewer');
+            
+            try {
+                logViewer.textContent = "Loading log...";
+                
+                // Read log file using tr to get single line, then replace spaces back to newlines
+                const result = await ksu.exec(`[ -f "${LOG_PATH}" ] && cat "${LOG_PATH}" || echo "No log file found yet. Module will create it after first run."`);
+                
+                let logText = '';
+                if (typeof result === 'string') {
+                    logText = result;
+                } else if (result && result.stdout) {
+                    logText = result.stdout;
+                } else {
+                    logText = "Unable to read log file";
+                }
+                
+                if (logText.trim() === '') {
+                    logText = "Log is empty. Module will log activity here.";
+                }
+                
+                logViewer.textContent = logText;
+                // Auto-scroll to bottom
+                logViewer.scrollTop = logViewer.scrollHeight;
+            } catch (e) {
+                logViewer.textContent = "Error loading log: " + e.message;
+            }
+        }
+
+        // Clear log file
+        async function clearLog() {
+            const LOG_PATH = "/data/adb/modules/sortify/sortify.log";
+            
+            if (!confirm("Are you sure you want to clear the log?")) {
+                return;
+            }
+            
+            try {
+                await ksu.exec(`echo "" > "${LOG_PATH}"`);
+                showToast("✅ Log cleared successfully!", false);
+                await loadLog(); // Reload to show empty log
+            } catch (e) {
+                showToast("❌ Error clearing log: " + e.message, true);
+            }
+        }
+
         // Initialize
         if (typeof ksu !== 'undefined') {
             loadConfig();
+            loadLog(); // Load log on startup
         } else {
             // Fallback for browser testing
             console.log("Not in KernelSU environment");
@@ -440,6 +505,7 @@
             document.getElementById('recursive').checked = true;
             document.getElementById('max_depth').value = 5;
             document.getElementById('exclude_folders').value = 'WhatsApp\nMusic\nScreenshots';
+            document.getElementById('log-viewer').textContent = 'Log viewer only works in KernelSU environment';
         }
     </script>
 

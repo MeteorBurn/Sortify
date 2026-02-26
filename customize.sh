@@ -32,11 +32,35 @@ ui_print "========================================="
 ui_print "  Sortify v4.3.2 Installed!"
 ui_print "========================================="
 ui_print ""
-ui_print "  Config file: /data/adb/modules/sortify/config.json"
+ui_print "  📋 Enable auto-sorting now?"
 ui_print ""
-ui_print "  ⚠️  IMPORTANT:"
-ui_print "    Module is DISABLED by default!"
-ui_print "    Open WebUI and enable it manually"
+ui_print "  Vol UP   = Enable (start after reboot)"
+ui_print "  Vol DOWN = Disable (enable later in WebUI)"
+ui_print ""
+ui_print "  ⏱️  Waiting 30 seconds for your choice..."
+ui_print "  (Default: Disabled)"
+ui_print ""
+
+# Wait for volume key with 30 second timeout
+ENABLE_MODULE="false"
+if chooseport 30; then
+    ui_print "  ✅ Auto-sorting ENABLED!"
+    ENABLE_MODULE="true"
+else
+    ui_print "  ⏸️  Auto-sorting DISABLED"
+    ui_print "  You can enable it later in WebUI"
+fi
+
+# Update config.json with user choice
+CONFIG_FILE="$MODPATH/config.json"
+if [ -f "$CONFIG_FILE" ]; then
+    # Use sed to replace the enabled value
+    sed -i "s/\"enabled\": false/\"enabled\": $ENABLE_MODULE/" "$CONFIG_FILE"
+    sed -i "s/\"enabled\": true/\"enabled\": $ENABLE_MODULE/" "$CONFIG_FILE"
+fi
+
+ui_print ""
+ui_print "  Config file: /data/adb/modules/sortify/config.json"
 ui_print ""
 ui_print "  NEW in v4.3.2:"
 ui_print "    ✓ Native WebUI for easy configuration!"
