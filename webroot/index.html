@@ -291,19 +291,31 @@
         // Load config when page loads
         async function loadConfig() {
             try {
-                const result = await ksu.exec(`cat "${CONFIG_PATH}"`);
-                console.log("ksu.exec result:", result);
+                const result = await ksu.exec(`cat "${CONFIG_PATH}" 2>&1`);
+                console.log("=== DEBUG ksu.exec ===");
+                console.log("result:", result);
+                console.log("typeof:", typeof result);
+                console.log("is null:", result === null);
+                console.log("is undefined:", result === undefined);
+                if (result && typeof result === 'object') {
+                    console.log("keys:", Object.keys(result));
+                    console.log("stdout:", result.stdout);
+                    console.log("out:", result.out);
+                }
+                console.log("======================");
                 
                 // Handle different result formats
                 let jsonText = '';
-                if (typeof result === 'string') {
+                if (result === undefined || result === null) {
+                    throw new Error("ksu.exec returned " + result);
+                } else if (typeof result === 'string' && result !== 'undefined') {
                     jsonText = result;
-                } else if (result && result.stdout) {
+                } else if (result && typeof result.stdout === 'string') {
                     jsonText = result.stdout;
-                } else if (result && result.out) {
+                } else if (result && typeof result.out === 'string') {
                     jsonText = result.out;
                 } else {
-                    throw new Error("Unable to read config file");
+                    throw new Error("Unable to parse result format: " + typeof result);
                 }
 
                 // Check if we got valid content
