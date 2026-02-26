@@ -89,6 +89,7 @@ mkdir -p "$BASE_PATH/Documents" \
          "$BASE_PATH/Audio" \
          "$BASE_PATH/Archives" \
          "$BASE_PATH/Apps" \
+         "$BASE_PATH/Magisk" \
          "$BASE_PATH/Others" \
          "$BASE_PATH/Duplicates"
 
@@ -99,6 +100,11 @@ VID_EXT="mp4 mkv avi mov webm flv mpeg mpg 3gp"
 AUD_EXT="mp3 m4a flac wav ogg opus aac wma"
 ARC_EXT="zip rar 7z tar gz bz2 iso"
 APP_EXT="apk xapk"
+
+# Check if ZIP is a Magisk module
+is_magisk_module() {
+    unzip -l "$1" 2>/dev/null | grep -q "module.prop$"
+}
 
 move_files() {
     dest="$1"
@@ -135,6 +141,36 @@ move_files "$BASE_PATH/Documents" $DOC_EXT
 move_files "$BASE_PATH/Images" $IMG_EXT
 move_files "$BASE_PATH/Videos" $VID_EXT
 move_files "$BASE_PATH/Audio" $AUD_EXT
+
+# Move Magisk modules (check ZIP files first)
+find "$DOWNLOAD_PATH" $DEPTH_OPT -type f \
+    ! -name ".*" \
+    ! -name "*.crdownload" \
+    ! -name "*.partial" \
+    ! -name "*.tmp" \
+    -iname "*.zip" 2>/dev/null | while IFS= read -r file; do
+        # Skip if in excluded folders
+        if [ -n "$EXCLUDE_LIST" ]; then
+            skip=0
+            for folder in $EXCLUDE_LIST; do
+                case "$file" in
+                    "$DOWNLOAD_PATH/$folder"/*) skip=1; break ;;
+                esac
+            done
+            [ $skip -eq 1 ] && continue
+        fi
+        
+        # Check if it's a Magisk module
+        if is_magisk_module "$file"; then
+            filename=$(basename "$file")
+            if [ -e "$BASE_PATH/Magisk/$filename" ]; then
+                mv -f "$file" "$BASE_PATH/Duplicates/" && log_msg "Dup: $filename"
+            else
+                mv -f "$file" "$BASE_PATH/Magisk/" && log_msg "Moved: $filename -> Magisk"
+            fi
+        fi
+    done
+
 move_files "$BASE_PATH/Archives" $ARC_EXT
 move_files "$BASE_PATH/Apps" $APP_EXT
 
