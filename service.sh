@@ -66,11 +66,22 @@ wait_until_storage
         export RECURSIVE
         export MAX_DEPTH
 
+        # Wait before sorting so boot/restart does not trigger an immediate run.
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Module enabled. Next sort in ${INTERVAL}s" >> "$LOG"
+        sleep "$INTERVAL"
+
+        # Re-check after waiting in case the module was disabled from WebUI.
+        ENABLED=$(get_json_bool "enabled")
+        if [ "$ENABLED" = "false" ]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Module disabled before scheduled sort. Skipping..." >> "$LOG"
+            continue
+        fi
+
         # Run sort
         sh "$MODDIR/action.sh" >> "$LOG" 2>&1
 
         # Log heartbeat
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Cycle done. Next in ${INTERVAL}s" >> "$LOG"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Cycle done." >> "$LOG"
 
         # Keep log small
         tail -n 200 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
@@ -78,6 +89,5 @@ wait_until_storage
         # Copy log to base_path for easy access
         cp "$LOG" "$BASE_PATH/sortify.log" 2>/dev/null
 
-        sleep "$INTERVAL"
     done
 ) &

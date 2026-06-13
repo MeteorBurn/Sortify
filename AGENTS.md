@@ -18,7 +18,7 @@
 **Original Author:** xCaptaiN09 (Sortify v4.0)  
 **Fork:** MeteorBurn (v4.3.0)  
 **License:** MIT  
-**Current Version:** 4.3.0 (versionCode: 25)
+**Current Version:** 4.3.0 (versionCode: 26)
 
 ### Original Features (v4.0):
 - ✅ Automatic file sorting by types (documents, images, videos, audio, archives, apps)
@@ -202,6 +202,29 @@ Single-page web interface for full module management via KsuWebUI or WebUI X.
 3. Install via Magisk Manager
 4. Check logs at `/data/adb/modules/sortify/sortify.log`
 
+### Building Magisk / KernelSU ZIP
+Installable archives are sensitive to Android shell formatting:
+- ✅ Build from a temporary staging folder, not directly from the Windows working tree
+- ✅ Normalize all text files to Unix LF before archiving (`.sh`, `.json`, `.html`, `module.prop`)
+- ✅ Use a minimal root-level archive structure:
+  - `module.prop`
+  - `service.sh`
+  - `action.sh`
+  - `customize.sh`
+  - `uninstall.sh`
+  - `config.json`
+  - `banner.png`
+  - `webroot/index.html`
+- ✅ Use `7z` or another ZIP tool that preserves this simple root layout
+- ❌ Do not include `.git`, `AGENTS.md`, `README.md`, `LICENSE`, or a parent folder in the install ZIP
+- ❌ Do not create the install ZIP directly from CRLF-normalized Windows files
+
+**Known issue:** PowerShell `Compress-Archive` can produce a ZIP that looks valid locally but fails during Magisk/Kitsune extraction or script execution if shell files contain CRLF line endings. Before release, verify:
+```powershell
+7z t dist\Sortify-v4.3.0-vc26-magisk.zip
+# Then extract/check all text files: CRLF count must be 0
+```
+
 ### Adding New File Categories
 1. Open `action.sh`
 2. Add new extension to appropriate variable (e.g., `DOC_EXT`)
@@ -260,7 +283,7 @@ ps aux | grep sortify
 ## 📝 Version History
 
 ### MeteorBurn Fork:
-- **v4.3.0 (versionCode 25)** - 🆕 Fork by MeteorBurn
+- **v4.3.0 (versionCode 26)** - 🆕 Fork by MeteorBurn
   - Native WebUI with full module management
   - Live log viewer with clear functionality
   - Volume key setup during installation (Vol UP/DOWN)
