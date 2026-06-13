@@ -6,7 +6,7 @@
 
 **Original Author:** [xCaptaiN09](https://github.com/xCaptaiN09)  
 **Fork by:** [MeteorBurn](https://github.com/MeteorBurn)  
-**Version:** 4.3.1 (versionCode 27)
+**Version:** 4.3.2 (versionCode 28)
 
 Sortify is a powerful **Magisk / KernelSU** module that automatically organizes files in your `/sdcard/Download/` folder into categorized subfolders.
 
@@ -25,13 +25,13 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * **🚫 Folder Exclusions:** Skips specific folders like WhatsApp, Music, Screenshots
 * **🪶 Lightweight:** 100% offline, uses native system resources
 
-### 🆕 New in Fork v4.3.1 (MeteorBurn):
+### 🆕 New in Fork v4.3.2 (MeteorBurn):
 * **🌐 Enhanced WebUI:** Full-featured web interface with all settings
 * **📋 Live Log Viewer:** View sorting activity logs in real-time with refresh/clear buttons
 * **🔌 Enable/Disable Toggle:** Turn module on/off without rebooting
 * **⚡ Manual Sort:** Run sorting immediately from WebUI without waiting for the timer
 * **📁 Folder Picker:** Pick Base Path and Download Path from internal shared storage only
-* **📂 Collapsible Categories:** Hide/show the file category reference panel
+* **📂 File Categories:** View the file category reference panel directly below exclusions
 * **⌨️ Volume Key Setup:** Choose enable/disable during installation (Vol UP/DOWN)
 * **⚙️ Advanced Configuration:** Interval, paths, recursion, depth, exclusions - all in WebUI
 * **🎨 Modern Dark UI:** Beautiful responsive design optimized for mobile
@@ -42,7 +42,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 
 ## 🧩 Installation
 
-1.  Download `Sortify-v4.3.1-vc27-magisk.zip` from [Releases](https://github.com/MeteorBurn/Sortify/releases)
+1.  Download `Sortify-v4.3.2-vc28-magisk.zip` from [Releases](https://github.com/MeteorBurn/Sortify/releases)
 2.  Flash through **Magisk** or **KernelSU**
 3.  **🆕 Choose during installation:**
     * Press **Vol UP** to enable module immediately
@@ -54,7 +54,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 
 ## ⚙️ Configuration (WebUI)
 
-**Sortify v4.3.1 Fork** features a complete web interface for all settings!
+**Sortify v4.3.2 Fork** features a complete web interface for all settings!
 
 ### How to access:
 1.  Open **KernelSU Manager** (or **WebUI X** app)
@@ -65,7 +65,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 ### Settings available:
 
 **🔌 Module Status:**
-* **Enable Auto-Sorting** - Master on/off switch (⚠️ disabled by default)
+* **Enable Auto-Sorting** - Master on/off switch
 * **Sort Now** - Immediately run sorting and write manual start/completion lines to the log
 
 **⚙️ General Settings:**
@@ -87,7 +87,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * **Manual sorting logs** show WebUI start/completion lines plus normal `action.sh` output
 
 **📂 File Categories:**
-* Collapsible info panel showing all supported file types
+* Info panel showing all supported file types directly below exclusions
 
 ---
 
@@ -109,6 +109,12 @@ You can force a sort immediately without waiting for the timer:
 ---
 
 ## 🧾 Changelog
+
+### Fork v4.3.2 (2026-06-14) - MeteorBurn
+* **⚙️ WebUI Layout Polish:** Moved recursive scanning controls into General Settings
+* **📂 File Categories Panel:** Restored always-visible category reference below exclusions
+* **🎨 Folder Picker Buttons:** Removed purple gradient from path picker icon buttons
+* **🧹 Module Status:** Removed the default-disabled warning text from the UI
 
 ### Fork v4.3.1 (2026-06-14) - MeteorBurn
 * **⚡ Manual Sort Button:** Added WebUI button to run sorting immediately
@@ -151,7 +157,7 @@ You can force a sort immediately without waiting for the timer:
 ## 🧡 Credits
 
 * **Original Module:** [xCaptaiN09](https://github.com/xCaptaiN09) - Sortify v4.0
-* **Fork Maintainer:** [MeteorBurn](https://github.com/MeteorBurn) - v4.3.1
+* **Fork Maintainer:** [MeteorBurn](https://github.com/MeteorBurn) - v4.3.2
 * **Powered by:** BusyBox, Android Shell, KernelSU WebUI
 
 [![GitHub release](https://img.shields.io/github/v/release/MeteorBurn/Sortify)](https://github.com/MeteorBurn/Sortify/releases)

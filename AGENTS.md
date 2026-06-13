@@ -16,9 +16,9 @@
 
 ### 🔱 Fork Information
 **Original Author:** xCaptaiN09 (Sortify v4.0)  
-**Fork:** MeteorBurn (v4.3.1)
+**Fork:** MeteorBurn (v4.3.2)
 **License:** MIT  
-**Current Version:** 4.3.1 (versionCode: 27)
+**Current Version:** 4.3.2 (versionCode: 28)
 
 ### Inherited Core Sorting Features
 - ✅ Automatic file sorting by type (documents, images, videos, audio, archives, apps)
@@ -29,13 +29,13 @@
 - ✅ Duplicate file handling via `Duplicates/`
 - ✅ Hidden and incomplete download protection
 
-### 🆕 Current Fork Features (v4.3.1):
+### 🆕 Current Fork Features (v4.3.2):
 - ✅ **Native WebUI** - Full-featured WebUI for KsuWebUI/WebUI X
 - ✅ **Enable/Disable Toggle** - Control module operation without rebooting
 - ✅ **Manual Sort Button** - Run sorting immediately from WebUI without waiting for the timer
 - ✅ **Internal Storage Folder Picker** - Pick Base Path and Download Path from user-accessible shared storage only
 - ✅ **Live Log Viewer** - Read, refresh, and clear the last 200 log lines
-- ✅ **Collapsible File Categories** - Hide/show supported categories from WebUI
+- ✅ **Always-visible File Categories** - Show supported categories directly below exclusions
 - ✅ **Volume Key Setup** - Enable/disable module during installation
 - ✅ **Enhanced Config Loading** - Reliable multiline JSON reading via `tr '\n' ' '`
 - ✅ **Proven Volume Key Detection** - Tested implementation adapted from Bootloop Protector
@@ -70,8 +70,8 @@ Sortify/
 - Used by Magisk/KernelSU for module identification and display
 - **Key fields:**
   - `id=sortify` - unique identifier
-  - `version=4.3.1` - displayed version
-  - `versionCode=27` - numeric version code for updates
+  - `version=4.3.2` - displayed version
+  - `versionCode=28` - numeric version code for updates
   - `author=xCaptaiN09` - module author
 
 ### 2. **config.json** - Configuration
@@ -172,11 +172,11 @@ Duplicates/: files with conflicting names
 Single-page web interface for full module management via KsuWebUI or WebUI X.
 
 **Main Sections:**
-- **Module Status** - Enable/disable toggle, manual sort button, and warning
+- **Module Status** - Enable/disable toggle and manual sort button
 - **General Settings** - Configure interval, paths, recursion, depth, and open internal-storage folder picker
 - **Folder Exclusions** - Manage excluded folders (multiline textarea)
+- **File Categories** - Always-visible informational section about categories
 - **Sortify Log** - 🆕 Live log viewing with Refresh/Clear buttons
-- **File Categories** - Collapsible informational section about categories
 - **Debug Info** - Hidden debug panel (display: none)
 
 **Technical Details:**
@@ -227,7 +227,7 @@ Installable archives are sensitive to Android shell formatting:
 
 **Known issue:** PowerShell `Compress-Archive` can produce a ZIP that looks valid locally but fails during Magisk/Kitsune extraction or script execution if shell files contain CRLF line endings. Before release, verify:
 ```powershell
-7z t dist\Sortify-v4.3.1-vc27-magisk.zip
+7z t dist\Sortify-v4.3.2-vc28-magisk.zip
 # Then extract/check all text files: CRLF count must be 0
 ```
 
@@ -289,6 +289,11 @@ ps aux | grep sortify
 ## 📝 Version History
 
 ### MeteorBurn Fork:
+- **v4.3.2 (versionCode 28)** - WebUI layout polish
+  - Moved recursive scanning controls into General Settings
+  - Restored always-visible File Categories below exclusions
+  - Removed default-disabled warning text from Module Status
+  - Removed purple gradient from Base Path and Download Path picker buttons
 - **v4.3.1 (versionCode 27)** - WebUI convenience update
   - Manual Sort button in Module Status
   - Internal-storage-only folder picker for Base Path and Download Path

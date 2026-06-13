@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-    <title>Sortify v4.3.1</title>
+    <title>Sortify v4.3.2</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -91,6 +91,11 @@
             line-height: 1;
             border-radius: 6px;
         }
+        .path-button {
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: #e0e0e0;
+        }
         input:focus,
         textarea:focus {
             outline: none;
@@ -152,54 +157,16 @@
         button:active {
             transform: translateY(0);
         }
+        .path-button:hover {
+            background: #333;
+            border-color: #666;
+            transform: none;
+            box-shadow: none;
+        }
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 12px;
-        }
-        .collapsible-card {
-            padding: 0;
-            overflow: hidden;
-        }
-        .collapsible-toggle {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 20px 24px;
-            background: #1e1e1e;
-            color: #bb86fc;
-            border-radius: 8px;
-            box-shadow: none;
-            text-align: left;
-        }
-        .collapsible-toggle:hover {
-            transform: none;
-            box-shadow: none;
-            background: #252525;
-        }
-        .collapsible-toggle h2 {
-            margin: 0;
-            padding: 0;
-            border: 0;
-            color: inherit;
-            font-size: 18px;
-        }
-        .collapsible-arrow {
-            color: #bb86fc;
-            font-size: 18px;
-            transition: transform 0.2s;
-        }
-        .collapsible-card.open .collapsible-arrow {
-            transform: rotate(90deg);
-        }
-        .collapsible-content {
-            display: none;
-            padding: 0 24px 24px;
-        }
-        .collapsible-card.open .collapsible-content {
-            display: block;
         }
         .info-item {
             background: #252525;
@@ -370,7 +337,7 @@
     <div class="container">
         <div class="header">
             <h1>📁 Sortify</h1>
-            <div class="version">v4.3.1 Configuration</div>
+            <div class="version">v4.3.2 Configuration</div>
         </div>
 
         <div class="card" style="border: 2px solid #bb86fc;">
@@ -381,9 +348,6 @@
                     <input type="checkbox" id="enabled">
                     <label style="color: #bb86fc; font-weight: bold;">Enable Auto-Sorting</label>
                 </div>
-                <p style="color: #888; font-size: 12px; margin-top: 8px; margin-left: 4px;">
-                    ⚠️ Module is disabled by default. Check this box to start automatic file sorting.
-                </p>
                 <button type="button" id="run-sort-button" class="status-action" onclick="runSortNow()">⚡ Sort Now</button>
             </div>
         </div>
@@ -411,15 +375,12 @@
                     <button type="button" class="path-button" onclick="openFolderPicker('download_path')" aria-label="Choose Download Path" title="Choose folder">📁</button>
                 </div>
             </div>
-        </div>
 
-        <div class="card">
-            <h2>🔍 Recursive Scanning</h2>
-            
             <div class="form-group">
+                <label>Enable recursive folder scanning</label>
                 <div class="checkbox-group" onclick="document.getElementById('recursive').click()">
                     <input type="checkbox" id="recursive">
-                    <label>Enable recursive folder scanning</label>
+                    <label>Enabled</label>
                 </div>
             </div>
 
@@ -441,6 +402,48 @@
         <button onclick="saveConfig()">💾 Save Configuration</button>
 
         <div class="card" style="margin-top: 20px;">
+            <h2>📂 File Categories</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="category">📄 Documents</div>
+                    <div class="extensions">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">🖼️ Images</div>
+                    <div class="extensions">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">🎬 Videos</div>
+                    <div class="extensions">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">🎵 Audio</div>
+                    <div class="extensions">mp3, m4a, flac, wav, ogg, opus, aac, wma</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">📦 Archives</div>
+                    <div class="extensions">zip*, rar, 7z, tar, gz, bz2, iso</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">📱 Apps</div>
+                    <div class="extensions">apk, xapk, apks</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">🧩 Magisk</div>
+                    <div class="extensions">zip files with module.prop</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">📋 Others</div>
+                    <div class="extensions">all other files</div>
+                </div>
+                <div class="info-item">
+                    <div class="category">♻️ Duplicates</div>
+                    <div class="extensions">files with name conflicts</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
             <h2>📋 Sortify Log</h2>
             <p style="color: #888; font-size: 12px; margin-bottom: 12px;">
                 Live log of sorting activity (last 200 lines)
@@ -459,53 +462,6 @@
             <h2 style="color: #ff6b6b;">🐛 Debug Info (для отладки)</h2>
             <div id="debug-info" style="background: #1a1a1a; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;">
                 Загрузка...
-            </div>
-        </div>
-
-        <div id="categories-card" class="card collapsible-card" style="margin-top: 20px;">
-            <button type="button" class="collapsible-toggle" onclick="toggleCategories()" aria-expanded="false" aria-controls="categories-content">
-                <h2>📂 File Categories</h2>
-                <span class="collapsible-arrow">▶</span>
-            </button>
-            <div id="categories-content" class="collapsible-content">
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="category">📄 Documents</div>
-                        <div class="extensions">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="category">🖼️ Images</div>
-                        <div class="extensions">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="category">🎬 Videos</div>
-                        <div class="extensions">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="category">🎵 Audio</div>
-                        <div class="extensions">mp3, m4a, flac, wav, ogg, opus, aac, wma</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="category">📦 Archives</div>
-                        <div class="extensions">zip*, rar, 7z, tar, gz, bz2, iso</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="category">📱 Apps</div>
-                        <div class="extensions">apk, xapk, apks</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="category">🧩 Magisk</div>
-                        <div class="extensions">zip files with module.prop</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="category">📋 Others</div>
-                        <div class="extensions">all other files</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="category">♻️ Duplicates</div>
-                        <div class="extensions">files with name conflicts</div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -761,13 +717,6 @@
             document.getElementById(folderPickerTargetId).value = toShortStoragePath(folderPickerCurrentPath);
             closeFolderPicker();
             showToast('Folder selected.', false);
-        }
-
-        function toggleCategories() {
-            const card = document.getElementById('categories-card');
-            const toggle = card.querySelector('.collapsible-toggle');
-            const isOpen = card.classList.toggle('open');
-            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         }
 
         async function runSortNow() {
