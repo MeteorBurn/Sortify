@@ -73,6 +73,24 @@
             font-family: 'Courier New', monospace;
             transition: border-color 0.2s;
         }
+        .path-control {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+        }
+        .path-control input {
+            flex: 1;
+            min-width: 0;
+        }
+        .path-button,
+        .folder-picker-close {
+            width: 48px;
+            min-width: 48px;
+            padding: 0;
+            font-size: 18px;
+            line-height: 1;
+            border-radius: 6px;
+        }
         input:focus,
         textarea:focus {
             outline: none;
@@ -154,6 +172,111 @@
             font-weight: bold;
             margin-left: 8px;
         }
+        .folder-picker-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 900;
+            background: rgba(0, 0, 0, 0.72);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 16px;
+        }
+        .folder-picker-overlay.hidden {
+            display: none;
+        }
+        .folder-picker-modal {
+            width: 100%;
+            max-width: 600px;
+            max-height: 86vh;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 8px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .folder-picker-header {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 18px;
+            border-bottom: 1px solid #333;
+        }
+        .folder-picker-header h2 {
+            color: #bb86fc;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .folder-picker-current {
+            color: #a0a0a0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .folder-picker-roots,
+        .folder-picker-toolbar,
+        .folder-picker-footer {
+            display: flex;
+            gap: 8px;
+            padding: 12px 18px;
+            border-bottom: 1px solid #333;
+        }
+        .folder-picker-footer {
+            border-top: 1px solid #333;
+            border-bottom: none;
+        }
+        .folder-picker-roots button,
+        .folder-picker-toolbar button,
+        .folder-picker-footer button {
+            width: auto;
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .folder-picker-list {
+            min-height: 220px;
+            max-height: 46vh;
+            overflow-y: auto;
+            padding: 8px;
+            background: #181818;
+        }
+        .folder-entry {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            margin-bottom: 6px;
+            background: #252525;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            border-radius: 6px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: none;
+        }
+        .folder-entry:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: #bb86fc;
+        }
+        .folder-entry-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .folder-picker-message {
+            color: #888;
+            font-size: 13px;
+            line-height: 1.5;
+            padding: 16px;
+            text-align: center;
+        }
         #toast {
             visibility: hidden;
             min-width: 250px;
@@ -218,12 +341,18 @@
 
             <div class="form-group">
                 <label>Base Path <span class="hint">(where to sort files)</span></label>
-                <input type="text" id="base_path" placeholder="/sdcard/Sortify">
+                <div class="path-control">
+                    <input type="text" id="base_path" placeholder="/sdcard/Sortify">
+                    <button type="button" class="path-button" onclick="openFolderPicker('base_path')" aria-label="Choose Base Path" title="Choose folder">📁</button>
+                </div>
             </div>
 
             <div class="form-group">
                 <label>Download Path <span class="hint">(source folder)</span></label>
-                <input type="text" id="download_path" placeholder="/sdcard/Download">
+                <div class="path-control">
+                    <input type="text" id="download_path" placeholder="/sdcard/Download">
+                    <button type="button" class="path-button" onclick="openFolderPicker('download_path')" aria-label="Choose Download Path" title="Choose folder">📁</button>
+                </div>
             </div>
         </div>
 
@@ -319,10 +448,200 @@
         </div>
     </div>
 
+    <div id="folder-picker-overlay" class="folder-picker-overlay hidden">
+        <div class="folder-picker-modal" role="dialog" aria-modal="true" aria-labelledby="folder-picker-title">
+            <div class="folder-picker-header">
+                <div>
+                    <h2 id="folder-picker-title">Choose Folder</h2>
+                    <div id="folder-picker-current" class="folder-picker-current">/sdcard</div>
+                </div>
+                <button type="button" class="folder-picker-close" onclick="closeFolderPicker()" aria-label="Close folder picker" title="Close">&times;</button>
+            </div>
+            <div class="folder-picker-roots">
+                <button type="button" onclick="loadFolder('/sdcard')">/sdcard</button>
+                <button type="button" onclick="loadFolder('/storage/emulated/0')">/storage</button>
+                <button type="button" onclick="loadFolder('/mnt/media_rw')">OTG</button>
+            </div>
+            <div class="folder-picker-toolbar">
+                <button type="button" onclick="loadParentFolder()">↑ Up</button>
+                <button type="button" onclick="loadFolder(folderPickerCurrentPath)">Refresh</button>
+            </div>
+            <div id="folder-picker-list" class="folder-picker-list">
+                <div class="folder-picker-message">Loading folders...</div>
+            </div>
+            <div class="folder-picker-footer">
+                <button type="button" onclick="closeFolderPicker()" style="background: #444; color: #fff;">Cancel</button>
+                <button type="button" onclick="useCurrentFolder()">Use This Folder</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast">Settings Saved!</div>
 
     <script>
         const CONFIG_PATH = "/data/adb/modules/sortify/config.json";
+        let folderPickerTargetId = null;
+        let folderPickerCurrentPath = "/sdcard";
+
+        function execOutput(result) {
+            if (typeof result === 'string') {
+                return result.trim();
+            }
+            if (result && result.stdout) {
+                return result.stdout.trim();
+            }
+            if (result && result.out) {
+                return result.out.trim();
+            }
+            return '';
+        }
+
+        function normalizePath(path) {
+            let cleanPath = (path || '').trim().replace(/\\/g, '/').replace(/\/+/g, '/');
+            if (!cleanPath) {
+                return '/sdcard';
+            }
+            if (!cleanPath.startsWith('/')) {
+                cleanPath = '/' + cleanPath;
+            }
+            while (cleanPath.length > 1 && cleanPath.endsWith('/')) {
+                cleanPath = cleanPath.slice(0, -1);
+            }
+            return cleanPath;
+        }
+
+        function shellQuote(value) {
+            return "'" + String(value).replace(/[\r\n]/g, '').replace(/'/g, "'\\''") + "'";
+        }
+
+        function decodeBase64Utf8(value) {
+            const binary = atob((value || '').trim());
+            if (typeof TextDecoder !== 'undefined') {
+                const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+                return new TextDecoder('utf-8').decode(bytes);
+            }
+            return decodeURIComponent(escape(binary));
+        }
+
+        function getParentPath(path) {
+            const cleanPath = normalizePath(path);
+            if (cleanPath === '/') {
+                return '/';
+            }
+            const index = cleanPath.lastIndexOf('/');
+            return index <= 0 ? '/' : cleanPath.slice(0, index);
+        }
+
+        function basename(path) {
+            const cleanPath = normalizePath(path);
+            if (cleanPath === '/') {
+                return '/';
+            }
+            return cleanPath.slice(cleanPath.lastIndexOf('/') + 1);
+        }
+
+        function setFolderPickerMessage(message) {
+            const list = document.getElementById('folder-picker-list');
+            list.innerHTML = '';
+            const item = document.createElement('div');
+            item.className = 'folder-picker-message';
+            item.textContent = message;
+            list.appendChild(item);
+        }
+
+        function renderFolderList(dirs) {
+            const list = document.getElementById('folder-picker-list');
+            list.innerHTML = '';
+
+            if (!dirs.length) {
+                setFolderPickerMessage('No subfolders found.');
+                return;
+            }
+
+            dirs.forEach(dir => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'folder-entry';
+                button.onclick = () => loadFolder(dir);
+
+                const icon = document.createElement('span');
+                icon.textContent = '📁';
+
+                const name = document.createElement('span');
+                name.className = 'folder-entry-name';
+                name.textContent = basename(dir);
+
+                button.appendChild(icon);
+                button.appendChild(name);
+                list.appendChild(button);
+            });
+        }
+
+        async function openFolderPicker(targetId) {
+            if (typeof ksu === 'undefined') {
+                showToast('Folder picker works only inside KernelSU/WebUI.', true);
+                return;
+            }
+
+            folderPickerTargetId = targetId;
+            const input = document.getElementById(targetId);
+            folderPickerCurrentPath = normalizePath(input.value || '/sdcard');
+            document.getElementById('folder-picker-overlay').classList.remove('hidden');
+            await loadFolder(folderPickerCurrentPath);
+        }
+
+        function closeFolderPicker() {
+            document.getElementById('folder-picker-overlay').classList.add('hidden');
+            folderPickerTargetId = null;
+        }
+
+        async function loadParentFolder() {
+            await loadFolder(getParentPath(folderPickerCurrentPath));
+        }
+
+        async function loadFolder(path, allowFallback = true) {
+            const targetPath = normalizePath(path);
+            folderPickerCurrentPath = targetPath;
+            document.getElementById('folder-picker-current').textContent = targetPath;
+            setFolderPickerMessage('Loading folders...');
+
+            try {
+                const quotedPath = shellQuote(targetPath);
+                const command = `dir=${quotedPath}; if [ -d "$dir" ]; then { printf '__OK__\\n%s\\n' "$dir"; find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort; } | base64 | tr -d '\\n'; else { printf '__MISSING__\\n%s\\n' "$dir"; } | base64 | tr -d '\\n'; fi`;
+                const output = execOutput(await ksu.exec(command));
+                const decoded = decodeBase64Utf8(output);
+                const lines = decoded.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                const status = lines.shift();
+                const resolvedPath = normalizePath(lines.shift() || targetPath);
+
+                if (status === '__MISSING__') {
+                    if (allowFallback) {
+                        const parent = getParentPath(targetPath);
+                        showToast('Folder not found. Showing parent folder.', true);
+                        await loadFolder(parent, false);
+                    } else {
+                        setFolderPickerMessage('Folder not found.');
+                    }
+                    return;
+                }
+
+                folderPickerCurrentPath = resolvedPath;
+                document.getElementById('folder-picker-current').textContent = resolvedPath;
+                renderFolderList(lines.map(normalizePath));
+            } catch (e) {
+                setFolderPickerMessage('Unable to load folders: ' + e.message);
+            }
+        }
+
+        function useCurrentFolder() {
+            if (!folderPickerTargetId) {
+                closeFolderPicker();
+                return;
+            }
+            document.getElementById(folderPickerTargetId).value = folderPickerCurrentPath;
+            closeFolderPicker();
+            showToast('Folder selected.', false);
+        }
 
         // Load config when page loads
         async function loadConfig() {
