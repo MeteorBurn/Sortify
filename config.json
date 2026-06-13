@@ -1,6 +1,6 @@
 {
     "enabled": false,
-    "interval": 1000,
+    "interval": 3600,
     "base_path": "/sdcard/Sortify",
     "download_path": "/sdcard/Download",
     "recursive": true,

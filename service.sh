@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Sortify v4.3.0 Service - JSON Config Version
+# Sortify v4.3.1 Service - JSON Config Version
 
 MODDIR=${0%/*}
 CONFIG="$MODDIR/config.json"
@@ -54,7 +54,7 @@ wait_until_storage
         MAX_DEPTH=$(get_json_value "max_depth")
 
         # Defaults if empty
-        INTERVAL="${INTERVAL:-300}"
+        INTERVAL="${INTERVAL:-3600}"
         BASE_PATH="${BASE_PATH:-/sdcard/Sortify}"
         DOWNLOAD_PATH="${DOWNLOAD_PATH:-/sdcard/Download}"
         RECURSIVE="${RECURSIVE:-false}"

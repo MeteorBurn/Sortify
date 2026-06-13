@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-    <title>Sortify v4.3.0</title>
+    <title>Sortify v4.3.1</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -121,6 +121,18 @@
             cursor: pointer;
             flex: 1;
         }
+        .status-action {
+            margin-top: 14px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: #fff;
+        }
+        .status-action:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
         button {
             width: 100%;
             padding: 14px;
@@ -144,6 +156,50 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 12px;
+        }
+        .collapsible-card {
+            padding: 0;
+            overflow: hidden;
+        }
+        .collapsible-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 20px 24px;
+            background: #1e1e1e;
+            color: #bb86fc;
+            border-radius: 8px;
+            box-shadow: none;
+            text-align: left;
+        }
+        .collapsible-toggle:hover {
+            transform: none;
+            box-shadow: none;
+            background: #252525;
+        }
+        .collapsible-toggle h2 {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            color: inherit;
+            font-size: 18px;
+        }
+        .collapsible-arrow {
+            color: #bb86fc;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+        .collapsible-card.open .collapsible-arrow {
+            transform: rotate(90deg);
+        }
+        .collapsible-content {
+            display: none;
+            padding: 0 24px 24px;
+        }
+        .collapsible-card.open .collapsible-content {
+            display: block;
         }
         .info-item {
             background: #252525;
@@ -314,7 +370,7 @@
     <div class="container">
         <div class="header">
             <h1>📁 Sortify</h1>
-            <div class="version">v4.3.0 Configuration</div>
+            <div class="version">v4.3.1 Configuration</div>
         </div>
 
         <div class="card" style="border: 2px solid #bb86fc;">
@@ -328,6 +384,7 @@
                 <p style="color: #888; font-size: 12px; margin-top: 8px; margin-left: 4px;">
                     ⚠️ Module is disabled by default. Check this box to start automatic file sorting.
                 </p>
+                <button type="button" id="run-sort-button" class="status-action" onclick="runSortNow()">⚡ Sort Now</button>
             </div>
         </div>
 
@@ -336,7 +393,7 @@
             
             <div class="form-group">
                 <label>Sort Interval <span class="hint">(seconds)</span></label>
-                <input type="number" id="interval" placeholder="1000" min="10" step="10">
+                <input type="number" id="interval" placeholder="3600" min="10" step="10">
             </div>
 
             <div class="form-group">
@@ -405,44 +462,49 @@
             </div>
         </div>
 
-        <div class="card" style="margin-top: 20px;">
-            <h2>📂 File Categories</h2>
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="category">📄 Documents</div>
-                    <div class="extensions">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</div>
-                </div>
-                <div class="info-item">
-                    <div class="category">🖼️ Images</div>
-                    <div class="extensions">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</div>
-                </div>
-                <div class="info-item">
-                    <div class="category">🎬 Videos</div>
-                    <div class="extensions">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</div>
-                </div>
-                <div class="info-item">
-                    <div class="category">🎵 Audio</div>
-                    <div class="extensions">mp3, m4a, flac, wav, ogg, opus, aac, wma</div>
-                </div>
-                <div class="info-item">
-                    <div class="category">📦 Archives</div>
-                    <div class="extensions">zip*, rar, 7z, tar, gz, bz2, iso</div>
-                </div>
-                <div class="info-item">
-                    <div class="category">📱 Apps</div>
-                    <div class="extensions">apk, xapk, apks</div>
-                </div>
-                <div class="info-item">
-                    <div class="category">🧩 Magisk</div>
-                    <div class="extensions">zip files with module.prop</div>
-                </div>
-                <div class="info-item">
-                    <div class="category">📋 Others</div>
-                    <div class="extensions">all other files</div>
-                </div>
-                <div class="info-item">
-                    <div class="category">♻️ Duplicates</div>
-                    <div class="extensions">files with name conflicts</div>
+        <div id="categories-card" class="card collapsible-card" style="margin-top: 20px;">
+            <button type="button" class="collapsible-toggle" onclick="toggleCategories()" aria-expanded="false" aria-controls="categories-content">
+                <h2>📂 File Categories</h2>
+                <span class="collapsible-arrow">▶</span>
+            </button>
+            <div id="categories-content" class="collapsible-content">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="category">📄 Documents</div>
+                        <div class="extensions">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="category">🖼️ Images</div>
+                        <div class="extensions">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="category">🎬 Videos</div>
+                        <div class="extensions">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="category">🎵 Audio</div>
+                        <div class="extensions">mp3, m4a, flac, wav, ogg, opus, aac, wma</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="category">📦 Archives</div>
+                        <div class="extensions">zip*, rar, 7z, tar, gz, bz2, iso</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="category">📱 Apps</div>
+                        <div class="extensions">apk, xapk, apks</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="category">🧩 Magisk</div>
+                        <div class="extensions">zip files with module.prop</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="category">📋 Others</div>
+                        <div class="extensions">all other files</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="category">♻️ Duplicates</div>
+                        <div class="extensions">files with name conflicts</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -458,9 +520,7 @@
                 <button type="button" class="folder-picker-close" onclick="closeFolderPicker()" aria-label="Close folder picker" title="Close">&times;</button>
             </div>
             <div class="folder-picker-roots">
-                <button type="button" onclick="loadFolder('/sdcard')">/sdcard</button>
-                <button type="button" onclick="loadFolder('/storage/emulated/0')">/storage</button>
-                <button type="button" onclick="loadFolder('/mnt/media_rw')">OTG</button>
+                <button type="button" onclick="loadFolder('/sdcard')">Internal Storage</button>
             </div>
             <div class="folder-picker-toolbar">
                 <button type="button" onclick="loadParentFolder()">↑ Up</button>
@@ -479,7 +539,11 @@
     <div id="toast">Settings Saved!</div>
 
     <script>
+        const MODULE_DIR = "/data/adb/modules/sortify";
         const CONFIG_PATH = "/data/adb/modules/sortify/config.json";
+        const LOG_PATH = "/data/adb/modules/sortify/sortify.log";
+        const DEFAULT_INTERVAL = 3600;
+        const USER_STORAGE_ROOTS = ["/sdcard", "/storage/emulated/0"];
         let folderPickerTargetId = null;
         let folderPickerCurrentPath = "/sdcard";
 
@@ -510,6 +574,27 @@
             return cleanPath;
         }
 
+        function isUserStoragePath(path) {
+            const cleanPath = normalizePath(path);
+            return USER_STORAGE_ROOTS.some(root => cleanPath === root || cleanPath.startsWith(root + '/'));
+        }
+
+        function toShortStoragePath(path) {
+            const cleanPath = normalizePath(path);
+            if (cleanPath === '/storage/emulated/0') {
+                return '/sdcard';
+            }
+            if (cleanPath.startsWith('/storage/emulated/0/')) {
+                return '/sdcard/' + cleanPath.slice('/storage/emulated/0/'.length);
+            }
+            return cleanPath;
+        }
+
+        function getSafeFolderStartPath(path) {
+            const cleanPath = normalizePath(path);
+            return isUserStoragePath(cleanPath) ? toShortStoragePath(cleanPath) : '/sdcard';
+        }
+
         function shellQuote(value) {
             return "'" + String(value).replace(/[\r\n]/g, '').replace(/'/g, "'\\''") + "'";
         }
@@ -525,11 +610,16 @@
 
         function getParentPath(path) {
             const cleanPath = normalizePath(path);
-            if (cleanPath === '/') {
-                return '/';
+            if (!isUserStoragePath(cleanPath)) {
+                return '/sdcard';
+            }
+            const root = USER_STORAGE_ROOTS.find(item => cleanPath === item || cleanPath.startsWith(item + '/')) || '/sdcard';
+            if (cleanPath === root) {
+                return root;
             }
             const index = cleanPath.lastIndexOf('/');
-            return index <= 0 ? '/' : cleanPath.slice(0, index);
+            const parent = index <= 0 ? root : cleanPath.slice(0, index);
+            return isUserStoragePath(parent) ? parent : root;
         }
 
         function basename(path) {
@@ -585,7 +675,7 @@
 
             folderPickerTargetId = targetId;
             const input = document.getElementById(targetId);
-            folderPickerCurrentPath = normalizePath(input.value || '/sdcard');
+            folderPickerCurrentPath = getSafeFolderStartPath(input.value || '/sdcard');
             document.getElementById('folder-picker-overlay').classList.remove('hidden');
             await loadFolder(folderPickerCurrentPath);
         }
@@ -601,6 +691,11 @@
 
         async function loadFolder(path, allowFallback = true) {
             const targetPath = normalizePath(path);
+            if (!isUserStoragePath(targetPath)) {
+                showToast('Only internal shared storage can be selected.', true);
+                await loadFolder('/sdcard', false);
+                return;
+            }
             folderPickerCurrentPath = targetPath;
             document.getElementById('folder-picker-current').textContent = targetPath;
             setFolderPickerMessage('Loading folders...');
@@ -612,7 +707,7 @@
                 const decoded = decodeBase64Utf8(output);
                 const lines = decoded.split('\n').map(line => line.trim()).filter(line => line.length > 0);
                 const status = lines.shift();
-                const resolvedPath = normalizePath(lines.shift() || targetPath);
+                const resolvedPath = toShortStoragePath(lines.shift() || targetPath);
 
                 if (status === '__MISSING__') {
                     if (allowFallback) {
@@ -627,7 +722,7 @@
 
                 folderPickerCurrentPath = resolvedPath;
                 document.getElementById('folder-picker-current').textContent = resolvedPath;
-                renderFolderList(lines.map(normalizePath));
+                renderFolderList(lines.map(toShortStoragePath).filter(isUserStoragePath));
             } catch (e) {
                 setFolderPickerMessage('Unable to load folders: ' + e.message);
             }
@@ -638,9 +733,57 @@
                 closeFolderPicker();
                 return;
             }
-            document.getElementById(folderPickerTargetId).value = folderPickerCurrentPath;
+            document.getElementById(folderPickerTargetId).value = toShortStoragePath(folderPickerCurrentPath);
             closeFolderPicker();
             showToast('Folder selected.', false);
+        }
+
+        function toggleCategories() {
+            const card = document.getElementById('categories-card');
+            const toggle = card.querySelector('.collapsible-toggle');
+            const isOpen = card.classList.toggle('open');
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        async function runSortNow() {
+            if (typeof ksu === 'undefined') {
+                showToast('Manual sort works only inside KernelSU/WebUI.', true);
+                return;
+            }
+
+            const button = document.getElementById('run-sort-button');
+            button.disabled = true;
+            button.textContent = '⏳ Sorting...';
+
+            try {
+                const command = [
+                    `MODDIR=${shellQuote(MODULE_DIR)}`,
+                    `LOG=${shellQuote(LOG_PATH)}`,
+                    'echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort requested from WebUI." >> "$LOG"',
+                    'sh "$MODDIR/action.sh" >> "$LOG" 2>&1',
+                    'code=$?',
+                    'if [ "$code" -eq 0 ]; then echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort completed from WebUI." >> "$LOG"; else echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort failed from WebUI. Exit code: $code" >> "$LOG"; fi',
+                    'BASE_PATH=$(grep \'"base_path"\' "$MODDIR/config.json" | sed \'s/.*: *"\\([^"]*\\)".*/\\1/\')',
+                    'BASE_PATH="${BASE_PATH:-/sdcard/Sortify}"',
+                    'cp "$LOG" "$BASE_PATH/sortify.log" 2>/dev/null',
+                    'tail -n 200 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"',
+                    'exit "$code"'
+                ].join('; ');
+
+                const result = await ksu.exec(command);
+                await loadLog();
+                const output = execOutput(result);
+                if (output) {
+                    console.log(output);
+                }
+                showToast('✅ Manual sorting finished.', false);
+            } catch (e) {
+                await loadLog();
+                showToast('❌ Manual sorting failed: ' + e.message, true);
+            } finally {
+                button.disabled = false;
+                button.textContent = '⚡ Sort Now';
+            }
         }
 
         // Load config when page loads
@@ -683,7 +826,7 @@
 
                 // Populate form fields
                 document.getElementById('enabled').checked = config.enabled || false;
-                document.getElementById('interval').value = config.interval || 1000;
+                document.getElementById('interval').value = config.interval || DEFAULT_INTERVAL;
                 document.getElementById('base_path').value = config.base_path || '/sdcard/Sortify';
                 document.getElementById('download_path').value = config.download_path || '/sdcard/Download';
                 document.getElementById('recursive').checked = config.recursive || false;
@@ -700,7 +843,7 @@
                 
                 // Set defaults silently
                 document.getElementById('enabled').checked = false;
-                document.getElementById('interval').value = 1000;
+                document.getElementById('interval').value = DEFAULT_INTERVAL;
                 document.getElementById('base_path').value = '/sdcard/Sortify';
                 document.getElementById('download_path').value = '/sdcard/Download';
                 document.getElementById('recursive').checked = true;
@@ -714,7 +857,7 @@
             try {
                 // Get form values
                 const enabled = document.getElementById('enabled').checked;
-                const interval = parseInt(document.getElementById('interval').value) || 1000;
+                const interval = parseInt(document.getElementById('interval').value) || DEFAULT_INTERVAL;
                 const base_path = document.getElementById('base_path').value.trim() || '/sdcard/Sortify';
                 const download_path = document.getElementById('download_path').value.trim() || '/sdcard/Download';
                 const recursive = document.getElementById('recursive').checked;
@@ -763,7 +906,6 @@
 
         // Load log file
         async function loadLog() {
-            const LOG_PATH = "/data/adb/modules/sortify/sortify.log";
             const logViewer = document.getElementById('log-viewer');
             
             try {
@@ -807,8 +949,6 @@
 
         // Clear log file
         async function clearLog() {
-            const LOG_PATH = "/data/adb/modules/sortify/sortify.log";
-            
             if (!confirm("Are you sure you want to clear the log?")) {
                 return;
             }
@@ -830,7 +970,7 @@
             // Fallback for browser testing
             console.log("Not in KernelSU environment");
             document.getElementById('enabled').checked = false;
-            document.getElementById('interval').value = 1000;
+            document.getElementById('interval').value = DEFAULT_INTERVAL;
             document.getElementById('base_path').value = '/sdcard/Sortify';
             document.getElementById('download_path').value = '/sdcard/Download';
             document.getElementById('recursive').checked = true;

@@ -1,6 +1,6 @@
 id=sortify
 name=Sortify
-version=4.3.0
-versionCode=26
+version=4.3.1
+versionCode=27
 author=xCaptaiN09 (fork by MeteorBurn)
-description=Auto-sorts downloads into categorized folders. NEW: Native WebUI with on/off toggle, live log viewer, volume key setup. Recursive scanning, auto-exclusion, custom exclusions. Works with Magisk and KernelSU.
+description=Auto-sorts downloads into categorized folders. Native WebUI with on/off toggle, manual sort, folder picker, live log viewer, and volume key setup. Works with Magisk and KernelSU.
