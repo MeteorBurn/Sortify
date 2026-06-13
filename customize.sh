@@ -10,8 +10,7 @@ chooseport() {
     if [ -z "$TMPDIR" ]; then TMPDIR=/data/local/tmp; fi
     mkdir -p "$TMPDIR"
     
-    ui_print "   Listening for volume keys..."
-    ui_print "   Press Vol+ or Vol- within ${timeout_seconds} seconds..."
+    ui_print "- Waiting for volume key input (${timeout_seconds}s timeout)"
     
     local attempt_count=0
     while [ $attempt_count -lt $attempts ]; do
@@ -23,11 +22,11 @@ chooseport() {
             
             if [ -f "$TMPDIR/events" ]; then
                 if grep -q 'KEY_VOLUMEUP *DOWN' "$TMPDIR/events"; then
-                    ui_print "   ✓ Vol UP detected!"
+                    ui_print "- Vol UP detected"
                     rm -f "$TMPDIR/events"
                     return 0
                 elif grep -q 'KEY_VOLUMEDOWN *DOWN' "$TMPDIR/events"; then
-                    ui_print "   ✓ Vol DOWN detected!"
+                    ui_print "- Vol DOWN detected"
                     rm -f "$TMPDIR/events"
                     return 1
                 fi
@@ -35,13 +34,9 @@ chooseport() {
         done
         
         attempt_count=$((attempt_count + 1))
-        if [ $attempt_count -lt $attempts ]; then
-            local remaining=$((timeout_seconds - (attempt_count * 6)))
-            ui_print "   ... no input yet, $remaining seconds remaining"
-        fi
     done
     
-    ui_print "   ⏱️ Timeout - using default (disabled)"
+    ui_print "- No key selected. Default: disabled"
     rm -f "$TMPDIR/events"
     return 1
 }
@@ -74,26 +69,25 @@ set_perm "$MODPATH/uninstall.sh" 0 0 0755
 
 ui_print ""
 ui_print "========================================="
-ui_print "  Sortify v4.3.1 Installed!"
+ui_print "  Sortify v4.3.1"
 ui_print "========================================="
+ui_print "  Auto-sorts downloaded files into"
+ui_print "  Documents, Images, Videos, Audio,"
+ui_print "  Archives, Apps, Magisk, and Others."
 ui_print ""
-ui_print "  📋 Enable auto-sorting now?"
-ui_print ""
-ui_print "  Vol UP   = Enable (start after reboot)"
-ui_print "  Vol DOWN = Disable (enable later in WebUI)"
-ui_print ""
-ui_print "  ⏱️  Waiting 30 seconds for your choice..."
-ui_print "  (Default: Disabled)"
+ui_print "  Enable auto-sorting after reboot?"
+ui_print "  Vol UP   = Enable"
+ui_print "  Vol DOWN = Disable"
+ui_print "  Default  = Disabled"
 ui_print ""
 
 # Wait for volume key with 30 second timeout
 ENABLE_MODULE="false"
 if chooseport 30; then
-    ui_print "  ✅ Auto-sorting ENABLED!"
+    ui_print "- Auto-sorting enabled"
     ENABLE_MODULE="true"
 else
-    ui_print "  ⏸️  Auto-sorting DISABLED"
-    ui_print "  You can enable it later in WebUI"
+    ui_print "- Auto-sorting disabled"
 fi
 
 # Update config.json with user choice
@@ -104,34 +98,4 @@ if [ -f "$CONFIG_FILE" ]; then
     sed -i "s/\"enabled\": true/\"enabled\": $ENABLE_MODULE/" "$CONFIG_FILE"
 fi
 
-ui_print ""
-ui_print "  Config file: /data/adb/modules/sortify/config.json"
-ui_print ""
-ui_print "  NEW Features (Fork by MeteorBurn):"
-ui_print "    ✓ Native WebUI for easy configuration"
-ui_print "    ✓ Live log viewer with clear function"
-ui_print "    ✓ Manual sort button in WebUI"
-ui_print "    ✓ Built-in internal storage folder picker"
-ui_print "    ✓ Volume key setup on installation"
-ui_print "    ✓ Enable/disable module on-the-fly"
-ui_print "    ✓ Access via KsuWebUI or WebUI X"
-ui_print ""
-ui_print "  Settings available:"
-ui_print "    - enabled: turn module on/off"
-ui_print "    - interval: seconds between sorts"
-ui_print "    - base_path: where to create Sortify folders"
-ui_print "    - download_path: folder to sort from"
-ui_print "    - recursive: enable/disable recursive scan"
-ui_print "    - max_depth: max folder depth (if recursive)"
-ui_print "    - exclude_folders: folders to skip"
-ui_print ""
-ui_print "  Features from v4.3.0:"
-ui_print "    ✓ Auto-detect Magisk modules"
-ui_print ""
-ui_print "  Features from v4.3:"
-ui_print "    ✓ Recursive folder scanning"
-ui_print "    ✓ Auto-exclude base_path"
-ui_print "    ✓ Custom folder exclusions"
-ui_print ""
-ui_print "  Reboot, then enable module in WebUI!"
 ui_print "========================================="

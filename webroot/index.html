@@ -590,6 +590,29 @@
             return cleanPath;
         }
 
+        function toBrowseStoragePath(path) {
+            const cleanPath = normalizePath(path);
+            if (cleanPath === '/sdcard') {
+                return '/storage/emulated/0';
+            }
+            if (cleanPath.startsWith('/sdcard/')) {
+                return '/storage/emulated/0/' + cleanPath.slice('/sdcard/'.length);
+            }
+            return cleanPath;
+        }
+
+        function uniquePaths(paths) {
+            const seen = new Set();
+            return paths.filter(path => {
+                const cleanPath = normalizePath(path);
+                if (seen.has(cleanPath)) {
+                    return false;
+                }
+                seen.add(cleanPath);
+                return true;
+            });
+        }
+
         function getSafeFolderStartPath(path) {
             const cleanPath = normalizePath(path);
             return isUserStoragePath(cleanPath) ? toShortStoragePath(cleanPath) : '/sdcard';
@@ -690,7 +713,7 @@
         }
 
         async function loadFolder(path, allowFallback = true) {
-            const targetPath = normalizePath(path);
+            const targetPath = getSafeFolderStartPath(path);
             if (!isUserStoragePath(targetPath)) {
                 showToast('Only internal shared storage can be selected.', true);
                 await loadFolder('/sdcard', false);
@@ -701,8 +724,10 @@
             setFolderPickerMessage('Loading folders...');
 
             try {
-                const quotedPath = shellQuote(targetPath);
-                const command = `dir=${quotedPath}; if [ -d "$dir" ]; then { printf '__OK__\\n%s\\n' "$dir"; find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort; } | base64 | tr -d '\\n'; else { printf '__MISSING__\\n%s\\n' "$dir"; } | base64 | tr -d '\\n'; fi`;
+                const browsePath = toBrowseStoragePath(targetPath);
+                const quotedBrowsePath = shellQuote(browsePath);
+                const quotedFallbackPath = shellQuote(targetPath);
+                const command = `primary=${quotedBrowsePath}; fallback=${quotedFallbackPath}; if [ -d "$primary" ]; then dir="$primary"; else dir="$fallback"; fi; if [ -d "$dir" ]; then { printf '__OK__\\n%s\\n' "$dir"; find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort; } | base64 | tr -d '\\n'; else { printf '__MISSING__\\n%s\\n' "$dir"; } | base64 | tr -d '\\n'; fi`;
                 const output = execOutput(await ksu.exec(command));
                 const decoded = decodeBase64Utf8(output);
                 const lines = decoded.split('\n').map(line => line.trim()).filter(line => line.length > 0);
@@ -722,7 +747,7 @@
 
                 folderPickerCurrentPath = resolvedPath;
                 document.getElementById('folder-picker-current').textContent = resolvedPath;
-                renderFolderList(lines.map(toShortStoragePath).filter(isUserStoragePath));
+                renderFolderList(uniquePaths(lines.map(toShortStoragePath).filter(isUserStoragePath)));
             } catch (e) {
                 setFolderPickerMessage('Unable to load folders: ' + e.message);
             }
