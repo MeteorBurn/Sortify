@@ -6,10 +6,33 @@
     <title>Sortify v4.3.2</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-start: #07111f;
+            --bg-end: #111827;
+            --card-bg: #162033;
+            --input-bg: #1d2a41;
+            --status-bg: #0d3146;
+            --log-bg: #0b1626;
+            --debug-bg: #2a1018;
+            --border: #2f4566;
+            --border-strong: #3e6b91;
+            --accent: #38bdf8;
+            --accent-secondary: #fb7185;
+            --text: #eaf6ff;
+            --label: #c5d8ec;
+            --muted: #8ea4bd;
+            --hint: #698299;
+            --button-text: #061421;
+            --danger: #fb7185;
+            --danger-text: #26030a;
+            --shadow: rgba(0,0,0,0.34);
+            --glow: rgba(56, 189, 248, 0.35);
+            --overlay: rgba(4, 10, 18, 0.78);
+        }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
-            color: #e0e0e0;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            color: var(--text);
             padding: 20px;
             min-height: 100vh;
         }
@@ -22,26 +45,27 @@
             margin-bottom: 30px;
         }
         .header h1 {
-            color: #bb86fc;
+            color: var(--accent);
             font-size: 28px;
             margin-bottom: 5px;
         }
         .header .version {
-            color: #888;
+            color: var(--muted);
             font-size: 14px;
         }
         .card { 
-            background: #1e1e1e;
+            background: var(--card-bg);
             padding: 24px;
             border-radius: 12px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px var(--shadow);
         }
         .card h2 {
-            color: #bb86fc;
+            color: var(--accent);
             font-size: 18px;
             margin-bottom: 16px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--border);
             padding-bottom: 8px;
         }
         .form-group {
@@ -50,12 +74,12 @@
         label {
             display: block;
             margin-bottom: 8px;
-            color: #b0b0b0;
+            color: var(--label);
             font-size: 14px;
             font-weight: 500;
         }
         label .hint {
-            color: #666;
+            color: var(--hint);
             font-size: 12px;
             font-weight: normal;
             margin-left: 4px;
@@ -65,9 +89,9 @@
         textarea {
             width: 100%;
             padding: 12px;
-            background: #2c2c2c;
-            border: 1px solid #444;
-            color: white;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
             border-radius: 6px;
             font-size: 14px;
             font-family: 'Courier New', monospace;
@@ -92,14 +116,14 @@
             border-radius: 6px;
         }
         .path-button {
-            background: #2c2c2c;
-            border: 1px solid #444;
-            color: #e0e0e0;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
         }
         input:focus,
         textarea:focus {
             outline: none;
-            border-color: #bb86fc;
+            border-color: var(--accent);
         }
         textarea {
             resize: vertical;
@@ -111,7 +135,7 @@
             align-items: center;
             gap: 10px;
             padding: 12px;
-            background: #2c2c2c;
+            background: var(--input-bg);
             border-radius: 6px;
             cursor: pointer;
         }
@@ -119,7 +143,7 @@
             width: 20px;
             height: 20px;
             cursor: pointer;
-            accent-color: #bb86fc;
+            accent-color: var(--accent);
         }
         .checkbox-group label {
             margin: 0;
@@ -128,9 +152,9 @@
         }
         .status-action {
             margin-top: 14px;
-            background: #2c2c2c;
-            border: 1px solid #444;
-            color: #fff;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
         }
         .status-action:disabled {
             opacity: 0.65;
@@ -141,8 +165,8 @@
         button {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #bb86fc 0%, #9d6dd9 100%);
-            color: #000;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            color: var(--button-text);
             border: none;
             border-radius: 8px;
             font-weight: bold;
@@ -152,14 +176,14 @@
         }
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.4);
+            box-shadow: 0 4px 12px var(--glow);
         }
         button:active {
             transform: translateY(0);
         }
         .path-button:hover {
-            background: #333;
-            border-color: #666;
+            background: var(--status-bg);
+            border-color: var(--border-strong);
             transform: none;
             box-shadow: none;
         }
@@ -169,26 +193,45 @@
             gap: 12px;
         }
         .info-item {
-            background: #252525;
+            background: var(--input-bg);
             padding: 12px;
             border-radius: 6px;
-            border-left: 3px solid #bb86fc;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
         }
         .info-item .category {
-            color: #bb86fc;
+            color: var(--accent);
             font-weight: bold;
             font-size: 14px;
             margin-bottom: 4px;
         }
         .info-item .extensions {
-            color: #999;
+            color: var(--muted);
             font-size: 12px;
             font-family: 'Courier New', monospace;
         }
+        .category-toggle {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            cursor: pointer;
+            margin: 0;
+        }
+        .category-toggle input {
+            flex: 0 0 auto;
+            margin-top: 1px;
+        }
+        .category-copy {
+            min-width: 0;
+        }
+        .category-copy .category,
+        .category-copy .extensions {
+            display: block;
+        }
         .badge {
             display: inline-block;
-            background: #bb86fc;
-            color: #000;
+            background: var(--accent);
+            color: var(--button-text);
             padding: 2px 8px;
             border-radius: 4px;
             font-size: 10px;
@@ -199,7 +242,7 @@
             position: fixed;
             inset: 0;
             z-index: 900;
-            background: rgba(0, 0, 0, 0.72);
+            background: var(--overlay);
             display: flex;
             align-items: flex-end;
             justify-content: center;
@@ -212,8 +255,8 @@
             width: 100%;
             max-width: 600px;
             max-height: 86vh;
-            background: #1e1e1e;
-            border: 1px solid #444;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
             border-radius: 8px;
             box-shadow: 0 12px 32px rgba(0,0,0,0.55);
             display: flex;
@@ -226,15 +269,15 @@
             align-items: flex-start;
             justify-content: space-between;
             padding: 18px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--border);
         }
         .folder-picker-header h2 {
-            color: #bb86fc;
+            color: var(--accent);
             font-size: 18px;
             margin-bottom: 8px;
         }
         .folder-picker-current {
-            color: #a0a0a0;
+            color: var(--muted);
             font-family: 'Courier New', monospace;
             font-size: 12px;
             word-break: break-all;
@@ -245,10 +288,10 @@
             display: flex;
             gap: 8px;
             padding: 12px 18px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--border);
         }
         .folder-picker-footer {
-            border-top: 1px solid #333;
+            border-top: 1px solid var(--border);
             border-bottom: none;
         }
         .folder-picker-roots button,
@@ -265,7 +308,7 @@
             max-height: 46vh;
             overflow-y: auto;
             padding: 8px;
-            background: #181818;
+            background: var(--log-bg);
         }
         .folder-entry {
             width: 100%;
@@ -274,9 +317,9 @@
             gap: 10px;
             padding: 12px;
             margin-bottom: 6px;
-            background: #252525;
-            color: #e0e0e0;
-            border: 1px solid #333;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
             border-radius: 6px;
             text-align: left;
             font-size: 14px;
@@ -286,7 +329,7 @@
         .folder-entry:hover {
             transform: none;
             box-shadow: none;
-            border-color: #bb86fc;
+            border-color: var(--accent);
         }
         .folder-entry-name {
             overflow: hidden;
@@ -294,7 +337,7 @@
             white-space: nowrap;
         }
         .folder-picker-message {
-            color: #888;
+            color: var(--muted);
             font-size: 13px;
             line-height: 1.5;
             padding: 16px;
@@ -303,8 +346,8 @@
         #toast {
             visibility: hidden;
             min-width: 250px;
-            background-color: #333;
-            color: #fff;
+            background-color: var(--input-bg);
+            color: var(--text);
             text-align: center;
             border-radius: 8px;
             padding: 16px;
@@ -320,7 +363,8 @@
             animation: fadein 0.5s, fadeout 0.5s 2.5s;
         }
         #toast.error {
-            background-color: #cf6679;
+            background-color: var(--danger);
+            color: var(--danger-text);
         }
         @keyframes fadein {
             from { bottom: 0; opacity: 0; }
@@ -340,13 +384,13 @@
             <div class="version">v4.3.2 Configuration</div>
         </div>
 
-        <div class="card" style="border: 2px solid #bb86fc;">
+        <div class="card" style="border: 2px solid var(--accent);">
             <h2>🔌 Module Status</h2>
             
             <div class="form-group">
-                <div class="checkbox-group" onclick="document.getElementById('enabled').click()" style="background: #2a1a3a; border: 1px solid #bb86fc;">
+                <div class="checkbox-group" onclick="document.getElementById('enabled').click()" style="background: var(--status-bg); border: 1px solid var(--accent);">
                     <input type="checkbox" id="enabled">
-                    <label style="color: #bb86fc; font-weight: bold;">Enable Auto-Sorting</label>
+                    <label style="color: var(--accent); font-weight: bold;">Enable Auto-Sorting</label>
                 </div>
                 <button type="button" id="run-sort-button" class="status-action" onclick="runSortNow()">⚡ Sort Now</button>
             </div>
@@ -399,42 +443,80 @@
             </div>
         </div>
 
-        <button onclick="saveConfig()">💾 Save Configuration</button>
-
-        <div class="card" style="margin-top: 20px;">
+        <div class="card">
             <h2>📂 File Categories</h2>
             <div class="info-grid">
                 <div class="info-item">
-                    <div class="category">📄 Documents</div>
-                    <div class="extensions">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</div>
+                    <label class="category-toggle">
+                        <input type="checkbox" id="category_documents">
+                        <span class="category-copy">
+                            <span class="category">📄 Documents</span>
+                            <span class="extensions">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</span>
+                        </span>
+                    </label>
                 </div>
                 <div class="info-item">
-                    <div class="category">🖼️ Images</div>
-                    <div class="extensions">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</div>
+                    <label class="category-toggle">
+                        <input type="checkbox" id="category_images">
+                        <span class="category-copy">
+                            <span class="category">🖼️ Images</span>
+                            <span class="extensions">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</span>
+                        </span>
+                    </label>
                 </div>
                 <div class="info-item">
-                    <div class="category">🎬 Videos</div>
-                    <div class="extensions">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</div>
+                    <label class="category-toggle">
+                        <input type="checkbox" id="category_videos">
+                        <span class="category-copy">
+                            <span class="category">🎬 Videos</span>
+                            <span class="extensions">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</span>
+                        </span>
+                    </label>
                 </div>
                 <div class="info-item">
-                    <div class="category">🎵 Audio</div>
-                    <div class="extensions">mp3, m4a, flac, wav, ogg, opus, aac, wma</div>
+                    <label class="category-toggle">
+                        <input type="checkbox" id="category_audio">
+                        <span class="category-copy">
+                            <span class="category">🎵 Audio</span>
+                            <span class="extensions">mp3, m4a, flac, wav, ogg, opus, aac, wma</span>
+                        </span>
+                    </label>
                 </div>
                 <div class="info-item">
-                    <div class="category">📦 Archives</div>
-                    <div class="extensions">zip*, rar, 7z, tar, gz, bz2, iso</div>
+                    <label class="category-toggle">
+                        <input type="checkbox" id="category_archives">
+                        <span class="category-copy">
+                            <span class="category">📦 Archives</span>
+                            <span class="extensions">zip*, rar, 7z, tar, gz, bz2, iso</span>
+                        </span>
+                    </label>
                 </div>
                 <div class="info-item">
-                    <div class="category">📱 Apps</div>
-                    <div class="extensions">apk, xapk, apks</div>
+                    <label class="category-toggle">
+                        <input type="checkbox" id="category_apps">
+                        <span class="category-copy">
+                            <span class="category">📱 Apps</span>
+                            <span class="extensions">apk, xapk, apks</span>
+                        </span>
+                    </label>
                 </div>
                 <div class="info-item">
-                    <div class="category">🧩 Magisk</div>
-                    <div class="extensions">zip files with module.prop</div>
+                    <label class="category-toggle">
+                        <input type="checkbox" id="category_magisk">
+                        <span class="category-copy">
+                            <span class="category">🧩 Magisk</span>
+                            <span class="extensions">zip files with module.prop</span>
+                        </span>
+                    </label>
                 </div>
                 <div class="info-item">
-                    <div class="category">📋 Others</div>
-                    <div class="extensions">all other files</div>
+                    <label class="category-toggle">
+                        <input type="checkbox" id="category_others">
+                        <span class="category-copy">
+                            <span class="category">📋 Others</span>
+                            <span class="extensions">all other files</span>
+                        </span>
+                    </label>
                 </div>
                 <div class="info-item">
                     <div class="category">♻️ Duplicates</div>
@@ -443,24 +525,26 @@
             </div>
         </div>
 
+        <button onclick="saveConfig()">💾 Save Configuration</button>
+
         <div class="card" style="margin-top: 20px;">
             <h2>📋 Sortify Log</h2>
-            <p style="color: #888; font-size: 12px; margin-bottom: 12px;">
+            <p style="color: var(--muted); font-size: 12px; margin-bottom: 12px;">
                 Live log of sorting activity (last 200 lines)
             </p>
-            <div id="log-viewer" style="background: #1a1a1a; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-wrap: break-word; min-height: 400px; max-height: 600px; overflow-y: scroll; color: #a0a0a0; line-height: 1.4;">
+            <div id="log-viewer" style="background: var(--log-bg); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-wrap: break-word; min-height: 400px; max-height: 600px; overflow-y: scroll; color: var(--muted); line-height: 1.4;">
                 Loading log...
             </div>
             <div style="display: flex; gap: 10px; margin-top: 12px;">
-                <button onclick="loadLog()" style="flex: 1; background: #4a9eff;">🔄 Refresh Log</button>
-                <button onclick="clearLog()" style="flex: 1; background: #ff6b6b;">🗑️ Clear Log</button>
+                <button onclick="loadLog()" style="flex: 1; background: var(--accent);">🔄 Refresh Log</button>
+                <button onclick="clearLog()" style="flex: 1; background: var(--danger); color: var(--danger-text);">🗑️ Clear Log</button>
             </div>
         </div>
 
         <!-- Debug panel - hidden by default. To enable: remove display:none -->
-        <div class="card" style="margin-top: 20px; background: #2c1810; border: 1px solid #ff6b6b; display: none;">
-            <h2 style="color: #ff6b6b;">🐛 Debug Info (для отладки)</h2>
-            <div id="debug-info" style="background: #1a1a1a; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;">
+        <div class="card" style="margin-top: 20px; background: var(--debug-bg); border: 1px solid var(--danger); display: none;">
+            <h2 style="color: var(--danger);">🐛 Debug Info (для отладки)</h2>
+            <div id="debug-info" style="background: var(--log-bg); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;">
                 Загрузка...
             </div>
         </div>
@@ -486,7 +570,7 @@
                 <div class="folder-picker-message">Loading folders...</div>
             </div>
             <div class="folder-picker-footer">
-                <button type="button" onclick="closeFolderPicker()" style="background: #444; color: #fff;">Cancel</button>
+                <button type="button" onclick="closeFolderPicker()" style="background: var(--input-bg); color: var(--text); border: 1px solid var(--border);">Cancel</button>
                 <button type="button" onclick="useCurrentFolder()">Use This Folder</button>
             </div>
         </div>
@@ -500,6 +584,17 @@
         const LOG_PATH = "/data/adb/modules/sortify/sortify.log";
         const DEFAULT_INTERVAL = 3600;
         const USER_STORAGE_ROOTS = ["/sdcard", "/storage/emulated/0"];
+        const DEFAULT_ENABLED_CATEGORIES = {
+            documents: true,
+            images: true,
+            videos: true,
+            audio: true,
+            archives: true,
+            apps: true,
+            magisk: true,
+            others: true
+        };
+        const CATEGORY_KEYS = Object.keys(DEFAULT_ENABLED_CATEGORIES);
         let folderPickerTargetId = null;
         let folderPickerCurrentPath = "/sdcard";
 
@@ -585,6 +680,36 @@
                 return new TextDecoder('utf-8').decode(bytes);
             }
             return decodeURIComponent(escape(binary));
+        }
+
+        function getEnabledCategories(config) {
+            const enabledCategories = { ...DEFAULT_ENABLED_CATEGORIES };
+            if (config.enabled_categories && typeof config.enabled_categories === 'object') {
+                CATEGORY_KEYS.forEach(key => {
+                    if (typeof config.enabled_categories[key] === 'boolean') {
+                        enabledCategories[key] = config.enabled_categories[key];
+                    }
+                });
+            }
+            return enabledCategories;
+        }
+
+        function setCategoryCheckboxes(enabledCategories) {
+            CATEGORY_KEYS.forEach(key => {
+                const checkbox = document.getElementById(`category_${key}`);
+                if (checkbox) {
+                    checkbox.checked = enabledCategories[key] !== false;
+                }
+            });
+        }
+
+        function collectEnabledCategories() {
+            const enabledCategories = {};
+            CATEGORY_KEYS.forEach(key => {
+                const checkbox = document.getElementById(`category_${key}`);
+                enabledCategories[key] = checkbox ? checkbox.checked : true;
+            });
+            return enabledCategories;
         }
 
         function getParentPath(path) {
@@ -805,6 +930,7 @@
                 document.getElementById('download_path').value = config.download_path || '/sdcard/Download';
                 document.getElementById('recursive').checked = config.recursive || false;
                 document.getElementById('max_depth').value = config.max_depth || 5;
+                setCategoryCheckboxes(getEnabledCategories(config));
                 
                 // Handle exclude_folders array
                 if (config.exclude_folders && Array.isArray(config.exclude_folders)) {
@@ -822,6 +948,7 @@
                 document.getElementById('download_path').value = '/sdcard/Download';
                 document.getElementById('recursive').checked = true;
                 document.getElementById('max_depth').value = 5;
+                setCategoryCheckboxes(DEFAULT_ENABLED_CATEGORIES);
                 document.getElementById('exclude_folders').value = 'WhatsApp\nMusic\nScreenshots';
             }
         }
@@ -836,6 +963,7 @@
                 const download_path = document.getElementById('download_path').value.trim() || '/sdcard/Download';
                 const recursive = document.getElementById('recursive').checked;
                 const max_depth = parseInt(document.getElementById('max_depth').value) || 5;
+                const enabled_categories = collectEnabledCategories();
                 
                 // Parse exclude_folders (split by newline, filter empty)
                 const exclude_text = document.getElementById('exclude_folders').value;
@@ -852,6 +980,7 @@
                     download_path,
                     recursive,
                     max_depth,
+                    enabled_categories,
                     exclude_folders
                 };
 
@@ -949,6 +1078,7 @@
             document.getElementById('download_path').value = '/sdcard/Download';
             document.getElementById('recursive').checked = true;
             document.getElementById('max_depth').value = 5;
+            setCategoryCheckboxes(DEFAULT_ENABLED_CATEGORIES);
             document.getElementById('exclude_folders').value = 'WhatsApp\nMusic\nScreenshots';
             document.getElementById('log-viewer').textContent = 'Log viewer only works in KernelSU environment';
         }

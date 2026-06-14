@@ -1,5 +1,10 @@
 #!/system/bin/sh
-# Sortify v4.3.1 Install Script
+# Sortify Install Script
+
+MODULE_VERSION=$(grep '^version=' "$MODPATH/module.prop" 2>/dev/null | cut -d= -f2-)
+MODULE_VERSION_CODE=$(grep '^versionCode=' "$MODPATH/module.prop" 2>/dev/null | cut -d= -f2-)
+MODULE_VERSION="${MODULE_VERSION:-unknown}"
+MODULE_VERSION_CODE="${MODULE_VERSION_CODE:-unknown}"
 
 # Volume key detection function (adapted from Bootloop Protector)
 chooseport() {
@@ -41,7 +46,7 @@ chooseport() {
     return 1
 }
 
-ui_print "- Installing Sortify v4.3.1"
+ui_print "- Installing Sortify v${MODULE_VERSION} (versionCode: ${MODULE_VERSION_CODE})"
 
 # Read config values
 CONFIG="$MODPATH/config.json"
@@ -69,7 +74,7 @@ set_perm "$MODPATH/uninstall.sh" 0 0 0755
 
 ui_print ""
 ui_print "========================================="
-ui_print "  Sortify v4.3.1"
+ui_print "  Sortify v${MODULE_VERSION} (vc${MODULE_VERSION_CODE})"
 ui_print "========================================="
 ui_print "  Auto-sorts downloaded files into"
 ui_print "  Documents, Images, Videos, Audio,"

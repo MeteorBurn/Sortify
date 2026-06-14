@@ -5,8 +5,10 @@
 **IMPORTANT:** When working with this repository:
 - ❌ **DO NOT create reports** automatically (only on request)
 - ❌ **DO NOT run tests** automatically (only on request)
+- ❌ **DO NOT change `version` or `versionCode`** unless the user explicitly asks for a version bump
 - ✅ Execute the task and briefly report the result
 - ✅ Show diff of changes when necessary
+- ✅ After code changes or new functionality, build a fresh Magisk/KernelSU ZIP using the current version/build number unless a version bump was explicitly requested
 
 ---
 
@@ -35,8 +37,10 @@
 - ✅ **Manual Sort Button** - Run sorting immediately from WebUI without waiting for the timer
 - ✅ **Internal Storage Folder Picker** - Pick Base Path and Download Path from user-accessible shared storage only
 - ✅ **Live Log Viewer** - Read, refresh, and clear the last 200 log lines
-- ✅ **Always-visible File Categories** - Show supported categories directly below exclusions
+- ✅ **Configurable File Categories** - Enable/disable sorting per category directly from WebUI
+- ✅ **Cyber Blue Coral WebUI Theme** - Dark blue UI with blue/coral action accents
 - ✅ **Volume Key Setup** - Enable/disable module during installation
+- ✅ **Versioned Installer Output** - Installation log reads version/versionCode from `module.prop`
 - ✅ **Enhanced Config Loading** - Reliable multiline JSON reading via `tr '\n' ' '`
 - ✅ **Proven Volume Key Detection** - Tested implementation adapted from Bootloop Protector
 
@@ -84,6 +88,16 @@ Configuration file for module behavior:
     "download_path": "/sdcard/Download", // Where to take files from
     "recursive": true,                // Recursive scanning
     "max_depth": 5,                   // Maximum scan depth
+    "enabled_categories": {           // Enabled sorting categories
+        "documents": true,
+        "images": true,
+        "videos": true,
+        "audio": true,
+        "archives": true,
+        "apps": true,
+        "magisk": true,
+        "others": true
+    },
     "exclude_folders": ["WhatsApp", "Music", "Screenshots"] // Excluded folders
 }
 ```
@@ -93,6 +107,7 @@ Configuration file for module behavior:
 - `interval=3600` gives a one-hour default scan interval for battery saving
 - `base_path=/sdcard/Sortify` is the sorted output root
 - `download_path=/sdcard/Download` is the source folder
+- `enabled_categories` defaults all sortable categories to enabled
 - `exclude_folders` skips common user folders by name
 
 ### 3. **service.sh** - Background Service
@@ -116,6 +131,7 @@ Main script that performs file sorting. Current behavior includes:
 - Recursive search with depth control (`recursive`, `max_depth`)
 - Automatic `base_path` exclusion if it's inside `download_path`
 - Custom exclusions via `exclude_folders` array
+- Category toggles via `enabled_categories`
 
 **File Categories:**
 ```bash
@@ -156,6 +172,7 @@ Duplicates/: files with conflicting names
 
 ### 5. **customize.sh** - Installer
 - Runs during module installation via Magisk Manager
+- Reads `version` and `versionCode` from `module.prop` for installer output
 - Creates folder structure in `base_path`
 - Sets script permissions (0755)
 - Shows information about configuration and new features
@@ -175,9 +192,10 @@ Single-page web interface for full module management via KsuWebUI or WebUI X.
 - **Module Status** - Enable/disable toggle and manual sort button
 - **General Settings** - Configure interval, paths, recursion, depth, and open internal-storage folder picker
 - **Folder Exclusions** - Manage excluded folders (multiline textarea)
-- **File Categories** - Always-visible informational section about categories
+- **File Categories** - Enable/disable sorting for each supported category and view supported extensions
 - **Sortify Log** - 🆕 Live log viewing with Refresh/Clear buttons
 - **Debug Info** - Hidden debug panel (display: none)
+- **Theme** - Cyber Blue Coral palette via CSS custom properties in `:root`
 
 **Technical Details:**
 - **Config Loading:** Uses `cat | tr '\n' ' '` to read multiline JSON
@@ -209,6 +227,8 @@ Single-page web interface for full module management via KsuWebUI or WebUI X.
 4. Check logs at `/data/adb/modules/sortify/sortify.log`
 
 ### Building Magisk / KernelSU ZIP
+After changing module behavior, scripts, WebUI, config defaults, or adding functionality, build a fresh installable archive immediately after the edits. Use the current `module.prop` `version` and `versionCode` for the archive name unless the user explicitly requested a version change.
+
 Installable archives are sensitive to Android shell formatting:
 - ✅ Build from a temporary staging folder, not directly from the Windows working tree
 - ✅ Normalize all text files to Unix LF before archiving (`.sh`, `.json`, `.html`, `module.prop`)
@@ -290,6 +310,9 @@ ps aux | grep sortify
 
 ### MeteorBurn Fork:
 - **v4.3.2 (versionCode 28)** - WebUI layout polish
+  - Added Cyber Blue Coral WebUI palette
+  - Added File Categories enable/disable controls
+  - Installer output reads version and versionCode from module.prop
   - Moved recursive scanning controls into General Settings
   - Restored always-visible File Categories below exclusions
   - Removed default-disabled warning text from Module Status
@@ -322,7 +345,8 @@ ps aux | grep sortify
 When making changes:
 1. Check compatibility with Android busybox
 2. Test on real device
-3. Update `versionCode` in `module.prop`
-4. Document changes in description
-5. Commit changes to `dev` branch
-6. After testing, merge to `master`
+3. Update `version` / `versionCode` in `module.prop` only when the user explicitly requested a version bump
+4. Build a fresh Magisk/KernelSU ZIP after code changes or new functionality
+5. Document changes in description
+6. Commit changes to `dev` branch
+7. After testing, merge to `master`

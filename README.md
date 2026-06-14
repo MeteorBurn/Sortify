@@ -10,7 +10,7 @@
 
 Sortify is a powerful **Magisk / KernelSU** module that automatically organizes files in your `/sdcard/Download/` folder into categorized subfolders.
 
-**🆕 This fork adds:** Native WebUI with full control, manual sorting, internal-storage folder picker, live log viewer, volume key setup, and enable/disable toggle.
+**🆕 This fork adds:** Native WebUI with full control, category toggles, Cyber Blue Coral theme, manual sorting, internal-storage folder picker, live log viewer, volume key setup, and enable/disable toggle.
 
 ---
 
@@ -31,10 +31,11 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * **🔌 Enable/Disable Toggle:** Turn module on/off without rebooting
 * **⚡ Manual Sort:** Run sorting immediately from WebUI without waiting for the timer
 * **📁 Folder Picker:** Pick Base Path and Download Path from internal shared storage only
-* **📂 File Categories:** View the file category reference panel directly below exclusions
+* **📂 File Categories:** Enable or disable sorting for each file category directly from WebUI
 * **⌨️ Volume Key Setup:** Choose enable/disable during installation (Vol UP/DOWN)
+* **🧾 Versioned Installer Output:** Installation log reads the installed version from `module.prop`
 * **⚙️ Advanced Configuration:** Interval, paths, recursion, depth, exclusions - all in WebUI
-* **🎨 Modern Dark UI:** Beautiful responsive design optimized for mobile
+* **🎨 Cyber Blue Coral UI:** Responsive dark theme optimized for mobile
 * **📱 KsuWebUI/WebUI X:** Works natively without separate web server
 * **🐛 Debug Panel:** Hidden debug info for troubleshooting (optional)
 
@@ -87,7 +88,9 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * **Manual sorting logs** show WebUI start/completion lines plus normal `action.sh` output
 
 **📂 File Categories:**
-* Info panel showing all supported file types directly below exclusions
+* Category toggles for Documents, Images, Videos, Audio, Archives, Apps, Magisk modules, and Others
+* All category toggles are enabled by default
+* Disabled categories are skipped during sorting and are not moved into Others
 
 ---
 
@@ -111,6 +114,9 @@ You can force a sort immediately without waiting for the timer:
 ## 🧾 Changelog
 
 ### Fork v4.3.2 (2026-06-14) - MeteorBurn
+* **🎨 Cyber Blue Coral Theme:** Reworked WebUI palette from purple to blue/coral accents
+* **📂 Category Toggles:** Added per-category sorting enable/disable controls
+* **🧾 Installer Version Output:** Installer now displays version and versionCode from `module.prop`
 * **⚙️ WebUI Layout Polish:** Moved recursive scanning controls into General Settings
 * **📂 File Categories Panel:** Restored always-visible category reference below exclusions
 * **🎨 Folder Picker Buttons:** Removed purple gradient from path picker icon buttons
