@@ -682,6 +682,19 @@
             return decodeURIComponent(escape(binary));
         }
 
+        async function runShell(command) {
+            return execOutput(await ksu.exec(command));
+        }
+
+        async function readShellBase64(command) {
+            const output = await runShell(`{ ${command}; } | base64 | tr -d '\\n'`);
+            return decodeBase64Utf8(output);
+        }
+
+        async function writeTextFile(path, text) {
+            await ksu.exec(`cat > ${shellQuote(path)} << 'EOFSORTIFY'\n${text}\nEOFSORTIFY`);
+        }
+
         function getEnabledCategories(config) {
             const enabledCategories = { ...DEFAULT_ENABLED_CATEGORIES };
             if (config.enabled_categories && typeof config.enabled_categories === 'object') {
@@ -809,7 +822,7 @@
                 const quotedBrowsePath = shellQuote(browsePath);
                 const quotedFallbackPath = shellQuote(targetPath);
                 const command = `primary=${quotedBrowsePath}; fallback=${quotedFallbackPath}; if [ -d "$primary" ]; then dir="$primary"; else dir="$fallback"; fi; if [ -d "$dir" ]; then { printf '__OK__\\n%s\\n' "$dir"; find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort; } | base64 | tr -d '\\n'; else { printf '__MISSING__\\n%s\\n' "$dir"; } | base64 | tr -d '\\n'; fi`;
-                const output = execOutput(await ksu.exec(command));
+                const output = await runShell(command);
                 const decoded = decodeBase64Utf8(output);
                 const lines = decoded.split('\n').map(line => line.trim()).filter(line => line.length > 0);
                 const status = lines.shift();
@@ -862,16 +875,11 @@
                     'sh "$MODDIR/action.sh" >> "$LOG" 2>&1',
                     'code=$?',
                     'if [ "$code" -eq 0 ]; then echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort completed from WebUI." >> "$LOG"; else echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort failed from WebUI. Exit code: $code" >> "$LOG"; fi',
-                    'BASE_PATH=$(grep \'"base_path"\' "$MODDIR/config.json" | sed \'s/.*: *"\\([^"]*\\)".*/\\1/\')',
-                    'BASE_PATH="${BASE_PATH:-/sdcard/Sortify}"',
-                    'cp "$LOG" "$BASE_PATH/sortify.log" 2>/dev/null',
-                    'tail -n 200 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"',
                     'exit "$code"'
                 ].join('; ');
 
-                const result = await ksu.exec(command);
+                const output = await runShell(command);
                 await loadLog();
-                const output = execOutput(result);
                 if (output) {
                     console.log(output);
                 }
@@ -888,26 +896,10 @@
         // Load config when page loads
         async function loadConfig() {
             let debugInfo = "=== DEBUG ksu.exec ===\n";
-            
+
             try {
-                // Use tr to read JSON as single line (ksu.exec returns only last line with plain cat)
-                debugInfo += "Reading config with tr (single line)...\n";
-                const result = await ksu.exec(`cat "${CONFIG_PATH}" | tr '\\n' ' '`);
-                debugInfo += "Result type: " + typeof result + "\n";
-                debugInfo += "Result length: " + (typeof result === 'string' ? result.length : 'N/A') + " chars\n";
-                
-                let jsonText = '';
-                
-                // Handle string or object with stdout
-                if (typeof result === 'string') {
-                    jsonText = result.trim();
-                } else if (result && result.stdout) {
-                    jsonText = result.stdout.trim();
-                } else if (result && result.out) {
-                    jsonText = result.out.trim();
-                } else {
-                    throw new Error("Unexpected result format");
-                }
+                debugInfo += "Reading config via base64...\n";
+                const jsonText = (await readShellBase64(`if [ -f ${shellQuote(CONFIG_PATH)} ]; then cat ${shellQuote(CONFIG_PATH)}; else printf '{}'; fi`)).trim();
                 
                 debugInfo += "JSON length: " + jsonText.length + " chars\n";
                 debugInfo += "First 50 chars: " + jsonText.substring(0, 50) + "...\n";
@@ -984,12 +976,9 @@
                     exclude_folders
                 };
 
-                // Convert to JSON with proper formatting
                 const jsonString = JSON.stringify(config, null, 4);
 
-                // Write to file using cat with heredoc to handle special characters
-                const escapedJson = jsonString.replace(/\$/g, '\\$').replace(/`/g, '\\`');
-                await ksu.exec(`cat > "${CONFIG_PATH}" << 'EOFCONFIG'\n${jsonString}\nEOFCONFIG`);
+                await writeTextFile(CONFIG_PATH, jsonString);
 
                 showToast("✅ Configuration saved successfully!", false);
             } catch (e) {
@@ -1014,26 +1003,12 @@
             try {
                 logViewer.textContent = "Loading log...";
                 
-                // Use base64 encoding to read entire file as single line, then decode
-                // This works around ksu.exec only returning last line of output
-                const result = await ksu.exec(`if [ -f "${LOG_PATH}" ]; then tail -n 200 "${LOG_PATH}" | base64 | tr -d '\\n'; else echo "Tm8gbG9nIGZpbGUgZm91bmQgeWV0LiBNb2R1bGUgd2lsbCBjcmVhdGUgaXQgYWZ0ZXIgZmlyc3QgcnVuLg=="; fi`);
+                // Use base64 so ksu.exec returns complete multiline output as one line.
+                const fallbackLog = 'No log file found yet. Module will create it after first run.';
                 
                 let logText = '';
                 try {
-                    // Extract result string
-                    let base64String = '';
-                    if (typeof result === 'string') {
-                        base64String = result.trim();
-                    } else if (result && result.stdout) {
-                        base64String = result.stdout.trim();
-                    }
-                    
-                    if (base64String) {
-                        // Decode from base64
-                        logText = atob(base64String);
-                    } else {
-                        logText = "Unable to read log file";
-                    }
+                    logText = await readShellBase64(`if [ -f ${shellQuote(LOG_PATH)} ]; then tail -n 200 ${shellQuote(LOG_PATH)}; else printf %s ${shellQuote(fallbackLog)}; fi`);
                 } catch (decodeError) {
                     logText = "Error decoding log: " + decodeError.message;
                 }
@@ -1055,9 +1030,9 @@
             if (!confirm("Are you sure you want to clear the log?")) {
                 return;
             }
-            
+
             try {
-                await ksu.exec(`echo "" > "${LOG_PATH}"`);
+                await runShell(`: > ${shellQuote(LOG_PATH)}`);
                 showToast("✅ Log cleared successfully!", false);
                 await loadLog(); // Reload to show empty log
             } catch (e) {

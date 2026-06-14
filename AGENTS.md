@@ -52,10 +52,15 @@
 Sortify/
 ├── module.prop          # Magisk module metadata (version, description, author)
 ├── config.json          # Module configuration (paths, intervals, settings, enabled)
+├── common.sh            # Shared POSIX helpers for config, logging, and category folders
 ├── service.sh           # Main service (runs on Android boot)
 ├── action.sh            # File sorting logic (called by service.sh)
 ├── customize.sh         # Installation script with volume key detection
 ├── uninstall.sh         # Module uninstallation script
+├── scripts/
+│   └── build-module.ps1 # Reproducible ZIP builder with LF normalization
+├── tests/
+│   └── sortify-behavior.sh # Local shell smoke test for sorting behavior
 ├── webroot/             # 🆕 WebUI interface
 │   └── index.html       # Single-page web interface for configuration
 ├── banner.png           # Module banner image
@@ -236,6 +241,7 @@ Installable archives are sensitive to Android shell formatting:
   - `module.prop`
   - `service.sh`
   - `action.sh`
+  - `common.sh`
   - `customize.sh`
   - `uninstall.sh`
   - `config.json`

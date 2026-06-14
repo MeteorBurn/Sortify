@@ -1,260 +1,257 @@
 #!/system/bin/sh
-# Sortify Sort Action
+# Sortify sort action.
 
-MODDIR=${0%/*}
-CONFIG="$MODDIR/config.json"
-LOG="$MODDIR/sortify.log"
+case "$0" in
+    */*) MODDIR=${0%/*} ;;
+    *) MODDIR=$(pwd) ;;
+esac
+. "$MODDIR/common.sh"
+sortify_common_init "$MODDIR"
 
-# Parse JSON value (handles both "string" and number)
-get_json_value() {
-    raw=$(grep "\"$1\"" "$CONFIG" | cut -d: -f2- | sed 's/^ *//')
-    if echo "$raw" | grep -q '^"'; then
-        echo "$raw" | sed 's/^"\([^"]*\)".*/\1/'
-    else
-        echo "$raw" | sed 's/[^0-9]//g'
-    fi
-}
+sortify_config_refresh
+sortify_config_validate_current_schema
+sortify_log_config_warning_once
 
-# Parse JSON boolean
-get_json_bool() {
-    raw=$(grep "\"$1\"" "$CONFIG" | cut -d: -f2- | sed 's/^ *//' | sed 's/,.*$//')
-    if echo "$raw" | grep -qi "true"; then
-        echo "true"
-    else
-        echo "false"
-    fi
-}
+DOWNLOAD_PATH=$(sortify_config_get_string "download_path" "$SORTIFY_DEFAULT_DOWNLOAD_PATH")
+BASE_PATH=$(sortify_config_get_string "base_path" "$SORTIFY_DEFAULT_BASE_PATH")
+RECURSIVE=$(sortify_config_get_bool "recursive" "$SORTIFY_DEFAULT_RECURSIVE")
+MAX_DEPTH=$(sortify_config_get_number "max_depth" "$SORTIFY_DEFAULT_MAX_DEPTH")
 
-# Parse JSON boolean that defaults to true when the key is missing.
-get_json_bool_default_true() {
-    raw=$(grep "\"$1\"" "$CONFIG" | cut -d: -f2- | sed 's/^ *//' | sed 's/,.*$//')
-    if [ -z "$raw" ]; then
-        echo "true"
-    elif echo "$raw" | grep -qi "false"; then
-        echo "false"
-    else
-        echo "true"
-    fi
-}
+DOWNLOAD_PATH=$(sortify_normalize_dir "$DOWNLOAD_PATH")
+BASE_PATH=$(sortify_normalize_dir "$BASE_PATH")
 
-# Parse JSON array (single-line arrays)
-get_json_array() {
-    grep "\"$1\"" "$CONFIG" | sed 's/.*\[\(.*\)\].*/\1/' | tr ',' '\n' | sed 's/^ *"//; s/" *$//' | grep -v "^$"
-}
+CATEGORY_DOCUMENTS=$(sortify_config_get_category_bool "documents" "true")
+CATEGORY_IMAGES=$(sortify_config_get_category_bool "images" "true")
+CATEGORY_VIDEOS=$(sortify_config_get_category_bool "videos" "true")
+CATEGORY_AUDIO=$(sortify_config_get_category_bool "audio" "true")
+CATEGORY_ARCHIVES=$(sortify_config_get_category_bool "archives" "true")
+CATEGORY_APPS=$(sortify_config_get_category_bool "apps" "true")
+CATEGORY_MAGISK=$(sortify_config_get_category_bool "magisk" "true")
+CATEGORY_OTHERS=$(sortify_config_get_category_bool "others" "true")
 
-# Read config (or use exported values from service.sh)
-DOWNLOAD_PATH="${DOWNLOAD_PATH:-$(get_json_value "download_path")}"
-BASE_PATH="${BASE_PATH:-$(get_json_value "base_path")}"
-RECURSIVE="${RECURSIVE:-$(get_json_bool "recursive")}"
-MAX_DEPTH="${MAX_DEPTH:-$(get_json_value "max_depth")}"
-CATEGORY_DOCUMENTS="${CATEGORY_DOCUMENTS:-$(get_json_bool_default_true "documents")}"
-CATEGORY_IMAGES="${CATEGORY_IMAGES:-$(get_json_bool_default_true "images")}"
-CATEGORY_VIDEOS="${CATEGORY_VIDEOS:-$(get_json_bool_default_true "videos")}"
-CATEGORY_AUDIO="${CATEGORY_AUDIO:-$(get_json_bool_default_true "audio")}"
-CATEGORY_ARCHIVES="${CATEGORY_ARCHIVES:-$(get_json_bool_default_true "archives")}"
-CATEGORY_APPS="${CATEGORY_APPS:-$(get_json_bool_default_true "apps")}"
-CATEGORY_MAGISK="${CATEGORY_MAGISK:-$(get_json_bool_default_true "magisk")}"
-CATEGORY_OTHERS="${CATEGORY_OTHERS:-$(get_json_bool_default_true "others")}"
+EXCLUDE_FOLDERS=$(sortify_config_get_array "exclude_folders")
 
-# Defaults
-DOWNLOAD_PATH="${DOWNLOAD_PATH:-/sdcard/Download}"
-BASE_PATH="${BASE_PATH:-/sdcard/Sortify}"
-RECURSIVE="${RECURSIVE:-false}"
-MAX_DEPTH="${MAX_DEPTH:-5}"
-CATEGORY_DOCUMENTS="${CATEGORY_DOCUMENTS:-true}"
-CATEGORY_IMAGES="${CATEGORY_IMAGES:-true}"
-CATEGORY_VIDEOS="${CATEGORY_VIDEOS:-true}"
-CATEGORY_AUDIO="${CATEGORY_AUDIO:-true}"
-CATEGORY_ARCHIVES="${CATEGORY_ARCHIVES:-true}"
-CATEGORY_APPS="${CATEGORY_APPS:-true}"
-CATEGORY_MAGISK="${CATEGORY_MAGISK:-true}"
-CATEGORY_OTHERS="${CATEGORY_OTHERS:-true}"
+case "$MAX_DEPTH" in
+    ""|*[!0-9]*) MAX_DEPTH="$SORTIFY_DEFAULT_MAX_DEPTH" ;;
+esac
 
-# Set depth for find
 if [ "$RECURSIVE" = "true" ]; then
     DEPTH_OPT="-maxdepth $MAX_DEPTH"
 else
     DEPTH_OPT="-maxdepth 1"
 fi
 
-log_msg() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG"
-}
+sortify_create_category_dirs "$BASE_PATH"
 
-log_msg "Sort started. From: $DOWNLOAD_PATH To: $BASE_PATH (Recursive: $RECURSIVE)"
-log_msg "Enabled categories: Documents=$CATEGORY_DOCUMENTS Images=$CATEGORY_IMAGES Videos=$CATEGORY_VIDEOS Audio=$CATEGORY_AUDIO Archives=$CATEGORY_ARCHIVES Apps=$CATEGORY_APPS Magisk=$CATEGORY_MAGISK Others=$CATEGORY_OTHERS"
-
-# Build exclusion list
-EXCLUDE_LIST=""
-
-# Auto-exclude base_path if it's inside download_path
-case "$BASE_PATH" in
-    "$DOWNLOAD_PATH"/*)
-        BASE_FOLDER=$(echo "$BASE_PATH" | sed "s|^$DOWNLOAD_PATH/||" | cut -d'/' -f1)
-        if [ -n "$BASE_FOLDER" ]; then
-            EXCLUDE_LIST="$BASE_FOLDER"
-            log_msg "Auto-excluding: $BASE_FOLDER"
-        fi
-        ;;
-esac
-
-# Add user-defined exclusions
-USER_EXCLUDES=$(get_json_array "exclude_folders")
-if [ -n "$USER_EXCLUDES" ]; then
-    for folder in $USER_EXCLUDES; do
-        if [ -n "$EXCLUDE_LIST" ]; then
-            EXCLUDE_LIST="$EXCLUDE_LIST $folder"
-        else
-            EXCLUDE_LIST="$folder"
-        fi
-    done
-    log_msg "User exclusions: $(echo $USER_EXCLUDES | tr '\n' ' ')"
-fi
-
-# Create folders
-mkdir -p "$BASE_PATH/Documents" \
-         "$BASE_PATH/Images" \
-         "$BASE_PATH/Videos" \
-         "$BASE_PATH/Audio" \
-         "$BASE_PATH/Archives" \
-         "$BASE_PATH/Apps" \
-         "$BASE_PATH/Magisk" \
-         "$BASE_PATH/Others" \
-         "$BASE_PATH/Duplicates"
-
-# Extensions
-DOC_EXT="pdf doc docx txt xls xlsx ppt pptx csv"
-IMG_EXT="jpg jpeg png gif bmp webp heic heif svg"
-VID_EXT="mp4 mkv avi mov webm flv mpeg mpg 3gp"
-AUD_EXT="mp3 m4a flac wav ogg opus aac wma"
-ARC_EXT="zip rar 7z tar gz bz2 iso"
-APP_EXT="apk xapk apks"
-
-# Check if ZIP is a Magisk module
-is_magisk_module() {
-    unzip -l "$1" 2>/dev/null | grep -q "module.prop$"
-}
-
-is_in_excluded_folder() {
-    file="$1"
-    if [ -n "$EXCLUDE_LIST" ]; then
-        for folder in $EXCLUDE_LIST; do
-            case "$file" in
-                "$DOWNLOAD_PATH/$folder"/*) return 0 ;;
-            esac
-        done
-    fi
-    return 1
-}
-
-move_one_file() {
-    dest="$1"
-    dest_label="$2"
-    file="$3"
-    filename=$(basename "$file")
-    if [ -e "$dest/$filename" ]; then
-        mv -f "$file" "$BASE_PATH/Duplicates/" && log_msg "Dup: $filename"
-    else
-        mv -f "$file" "$dest/" && log_msg "Moved: $filename -> $dest_label"
-    fi
+log_categories() {
+    sortify_log_msg "Enabled categories: Documents=$CATEGORY_DOCUMENTS Images=$CATEGORY_IMAGES Videos=$CATEGORY_VIDEOS Audio=$CATEGORY_AUDIO Archives=$CATEGORY_ARCHIVES Apps=$CATEGORY_APPS Magisk=$CATEGORY_MAGISK Others=$CATEGORY_OTHERS"
 }
 
 get_file_ext() {
-    filename=$(basename "$1")
-    case "$filename" in
-        *.*) echo "${filename##*.}" | tr 'A-Z' 'a-z' ;;
+    sortify_filename=$(basename "$1")
+    case "$sortify_filename" in
+        *.*) echo "${sortify_filename##*.}" | tr 'A-Z' 'a-z' ;;
         *) echo "" ;;
     esac
 }
 
-ext_in_list() {
-    check_ext="$1"
-    shift
-    for known_ext in "$@"; do
-        [ "$check_ext" = "$known_ext" ] && return 0
+is_magisk_module() {
+    command -v unzip >/dev/null 2>&1 || return 1
+    unzip -l "$1" 2>/dev/null | grep -q "module.prop$"
+}
+
+is_excluded_folder_name() {
+    sortify_check_name="$1"
+    [ -n "$EXCLUDE_FOLDERS" ] || return 1
+
+    sortify_saved_ifs_exclude=$IFS
+    IFS='
+'
+    for sortify_excluded_name in $EXCLUDE_FOLDERS; do
+        if [ "$sortify_check_name" = "$sortify_excluded_name" ]; then
+            IFS=$sortify_saved_ifs_exclude
+            return 0
+        fi
     done
+    IFS=$sortify_saved_ifs_exclude
     return 1
 }
 
-is_known_category_file() {
-    file_ext=$(get_file_ext "$1")
-    [ -z "$file_ext" ] && return 1
-    ext_in_list "$file_ext" $DOC_EXT && return 0
-    ext_in_list "$file_ext" $IMG_EXT && return 0
-    ext_in_list "$file_ext" $VID_EXT && return 0
-    ext_in_list "$file_ext" $AUD_EXT && return 0
-    ext_in_list "$file_ext" $ARC_EXT && return 0
-    ext_in_list "$file_ext" $APP_EXT && return 0
+is_excluded_path() {
+    sortify_file_path="$1"
+    case "$sortify_file_path" in
+        "$DOWNLOAD_PATH"/*) sortify_relative_path=${sortify_file_path#"$DOWNLOAD_PATH"/} ;;
+        *) return 0 ;;
+    esac
+
+    sortify_saved_ifs_path=$IFS
+    IFS='/'
+    for sortify_path_segment in $sortify_relative_path; do
+        if is_excluded_folder_name "$sortify_path_segment"; then
+            IFS=$sortify_saved_ifs_path
+            return 0
+        fi
+    done
+    IFS=$sortify_saved_ifs_path
     return 1
 }
 
-move_files() {
-    dest="$1"
-    dest_label=$(basename "$dest")
-    shift
-    for ext in "$@"; do
-        find "$DOWNLOAD_PATH" $DEPTH_OPT -type f \
-            ! -name ".*" \
-            ! -name "*.crdownload" \
-            ! -name "*.partial" \
-            ! -name "*.tmp" \
-            -iname "*.$ext" 2>/dev/null | while IFS= read -r file; do
-                is_in_excluded_folder "$file" && continue
-                move_one_file "$dest" "$dest_label" "$file"
-            done
-    done
+is_in_output_path() {
+    sortify_file_path="$1"
+    case "$sortify_file_path" in
+        "$BASE_PATH/Documents"/*|"$BASE_PATH/Images"/*|"$BASE_PATH/Videos"/*|"$BASE_PATH/Audio"/*|"$BASE_PATH/Archives"/*|"$BASE_PATH/Apps"/*|"$BASE_PATH/Magisk"/*|"$BASE_PATH/Others"/*|"$BASE_PATH/Duplicates"/*)
+            return 0
+            ;;
+    esac
+
+    if [ "$BASE_PATH" != "$DOWNLOAD_PATH" ]; then
+        case "$sortify_file_path" in
+            "$BASE_PATH"/*) return 0 ;;
+        esac
+    fi
+
+    return 1
 }
 
-[ "$CATEGORY_DOCUMENTS" = "true" ] && move_files "$BASE_PATH/Documents" $DOC_EXT
-[ "$CATEGORY_IMAGES" = "true" ] && move_files "$BASE_PATH/Images" $IMG_EXT
-[ "$CATEGORY_VIDEOS" = "true" ] && move_files "$BASE_PATH/Videos" $VID_EXT
-[ "$CATEGORY_AUDIO" = "true" ] && move_files "$BASE_PATH/Audio" $AUD_EXT
+should_skip_file() {
+    sortify_file_path="$1"
+    sortify_filename=$(basename "$sortify_file_path")
 
-# Move Magisk modules (check ZIP files first)
-if [ "$CATEGORY_MAGISK" = "true" ]; then
-    find "$DOWNLOAD_PATH" $DEPTH_OPT -type f \
-        ! -name ".*" \
-        ! -name "*.crdownload" \
-        ! -name "*.partial" \
-        ! -name "*.tmp" \
-        -iname "*.zip" 2>/dev/null | while IFS= read -r file; do
-            is_in_excluded_folder "$file" && continue
-            if is_magisk_module "$file"; then
-                move_one_file "$BASE_PATH/Magisk" "Magisk" "$file"
+    case "$sortify_filename" in
+        .*|*.crdownload|*.partial|*.tmp) return 0 ;;
+    esac
+
+    is_in_output_path "$sortify_file_path" && return 0
+    is_excluded_path "$sortify_file_path" && return 0
+
+    return 1
+}
+
+classify_file() {
+    sortify_file_path="$1"
+    sortify_ext=$(get_file_ext "$sortify_file_path")
+
+    case "$sortify_ext" in
+        pdf|doc|docx|txt|xls|xlsx|ppt|pptx|csv)
+            [ "$CATEGORY_DOCUMENTS" = "true" ] && echo "Documents"
+            return
+            ;;
+        jpg|jpeg|png|gif|bmp|webp|heic|heif|svg)
+            [ "$CATEGORY_IMAGES" = "true" ] && echo "Images"
+            return
+            ;;
+        mp4|mkv|avi|mov|webm|flv|mpeg|mpg|3gp)
+            [ "$CATEGORY_VIDEOS" = "true" ] && echo "Videos"
+            return
+            ;;
+        mp3|m4a|flac|wav|ogg|opus|aac|wma)
+            [ "$CATEGORY_AUDIO" = "true" ] && echo "Audio"
+            return
+            ;;
+        zip)
+            if is_magisk_module "$sortify_file_path"; then
+                [ "$CATEGORY_MAGISK" = "true" ] && echo "Magisk"
+            else
+                [ "$CATEGORY_ARCHIVES" = "true" ] && echo "Archives"
             fi
-        done
-fi
+            return
+            ;;
+        rar|7z|tar|gz|bz2|iso)
+            [ "$CATEGORY_ARCHIVES" = "true" ] && echo "Archives"
+            return
+            ;;
+        apk|xapk|apks)
+            [ "$CATEGORY_APPS" = "true" ] && echo "Apps"
+            return
+            ;;
+    esac
 
-if [ "$CATEGORY_ARCHIVES" = "true" ]; then
-    for ext in $ARC_EXT; do
-        find "$DOWNLOAD_PATH" $DEPTH_OPT -type f \
-            ! -name ".*" \
-            ! -name "*.crdownload" \
-            ! -name "*.partial" \
-            ! -name "*.tmp" \
-            -iname "*.$ext" 2>/dev/null | while IFS= read -r file; do
-                is_in_excluded_folder "$file" && continue
-                if [ "$ext" = "zip" ] && is_magisk_module "$file"; then
-                    continue
-                fi
-                move_one_file "$BASE_PATH/Archives" "Archives" "$file"
-            done
+    [ "$CATEGORY_OTHERS" = "true" ] && echo "Others"
+}
+
+unique_duplicate_path() {
+    sortify_filename="$1"
+    sortify_candidate="$BASE_PATH/Duplicates/$sortify_filename"
+
+    if [ ! -e "$sortify_candidate" ]; then
+        echo "$sortify_candidate"
+        return
+    fi
+
+    case "$sortify_filename" in
+        *.*)
+            sortify_stem=${sortify_filename%.*}
+            sortify_ext=${sortify_filename##*.}
+            ;;
+        *)
+            sortify_stem=$sortify_filename
+            sortify_ext=""
+            ;;
+    esac
+
+    sortify_suffix=1
+    while :; do
+        if [ -n "$sortify_ext" ]; then
+            sortify_candidate="$BASE_PATH/Duplicates/$sortify_stem-$sortify_suffix.$sortify_ext"
+        else
+            sortify_candidate="$BASE_PATH/Duplicates/$sortify_stem-$sortify_suffix"
+        fi
+
+        if [ ! -e "$sortify_candidate" ]; then
+            echo "$sortify_candidate"
+            return
+        fi
+
+        sortify_suffix=$((sortify_suffix + 1))
     done
+}
+
+move_to_category() {
+    sortify_category="$1"
+    sortify_file_path="$2"
+    sortify_filename=$(basename "$sortify_file_path")
+    sortify_dest_dir="$BASE_PATH/$sortify_category"
+    sortify_dest_path="$sortify_dest_dir/$sortify_filename"
+
+    if [ -e "$sortify_dest_path" ]; then
+        sortify_dest_path=$(unique_duplicate_path "$sortify_filename")
+        sortify_dest_dir=$(dirname "$sortify_dest_path")
+        mkdir -p "$sortify_dest_dir"
+        if mv -f "$sortify_file_path" "$sortify_dest_path"; then
+            sortify_log_msg "Duplicate: $sortify_filename -> Duplicates/$(basename "$sortify_dest_path")"
+        else
+            sortify_log_msg "Failed to move duplicate: $sortify_filename"
+        fi
+        return
+    fi
+
+    mkdir -p "$sortify_dest_dir"
+    if mv -f "$sortify_file_path" "$sortify_dest_dir/"; then
+        sortify_log_msg "Moved: $sortify_filename -> $sortify_category"
+    else
+        sortify_log_msg "Failed to move: $sortify_filename -> $sortify_category"
+    fi
+}
+
+sortify_log_msg "Sort started. From: $DOWNLOAD_PATH To: $BASE_PATH (Recursive: $RECURSIVE)"
+log_categories
+
+if [ ! -d "$DOWNLOAD_PATH" ]; then
+    sortify_log_msg "Download path missing: $DOWNLOAD_PATH"
+    sortify_rotate_log
+    sortify_copy_log_to_base "$BASE_PATH"
+    exit 0
 fi
 
-[ "$CATEGORY_APPS" = "true" ] && move_files "$BASE_PATH/Apps" $APP_EXT
+find "$DOWNLOAD_PATH" $DEPTH_OPT -type f 2>/dev/null | while IFS= read -r sortify_file; do
+    should_skip_file "$sortify_file" && continue
 
-# Move remaining files to Others
-if [ "$CATEGORY_OTHERS" = "true" ]; then
-    find "$DOWNLOAD_PATH" $DEPTH_OPT -type f \
-        ! -name ".*" \
-        ! -name "*.crdownload" \
-        ! -name "*.partial" \
-        ! -name "*.tmp" 2>/dev/null | while IFS= read -r file; do
-            is_in_excluded_folder "$file" && continue
-            is_known_category_file "$file" && continue
-            move_one_file "$BASE_PATH/Others" "Others" "$file"
-        done
-fi
+    sortify_category=$(classify_file "$sortify_file")
+    [ -n "$sortify_category" ] || continue
 
-log_msg "Sort completed"
+    move_to_category "$sortify_category" "$sortify_file"
+done
+
+sortify_log_msg "Sort completed"
+sortify_rotate_log
+sortify_copy_log_to_base "$BASE_PATH"
