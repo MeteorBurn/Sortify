@@ -8,6 +8,9 @@ SORTIFY_DEFAULT_DOWNLOAD_PATH="/sdcard/Download"
 SORTIFY_DEFAULT_RECURSIVE=true
 SORTIFY_DEFAULT_MAX_DEPTH=5
 
+# Root of user-accessible shared storage. Overridable only via environment (tests).
+SORTIFY_STORAGE_ROOT="${SORTIFY_STORAGE_ROOT:-/sdcard}"
+
 SORTIFY_CATEGORY_DIRS="Documents Images Videos Audio Archives Apps Magisk Others Duplicates"
 SORTIFY_CATEGORY_KEYS="documents images videos audio archives apps magisk others"
 
@@ -153,7 +156,7 @@ sortify_config_set_enabled() {
 }
 
 sortify_normalize_dir() {
-    sortify_path_value="$1"
+    sortify_path_value=$(printf '%s\n' "$1" | sed 's#//*#/#g')
     if [ -z "$sortify_path_value" ]; then
         printf '%s\n' ""
         return
@@ -165,11 +168,29 @@ sortify_normalize_dir() {
         sortify_path_value="$sortify_trimmed_path"
     done
 
+    # Use one spelling for internal storage so base/download paths can be compared.
+    case "$sortify_path_value" in
+        /storage/emulated/0|/storage/self/primary) sortify_path_value="/sdcard" ;;
+        /storage/emulated/0/*) sortify_path_value="/sdcard/${sortify_path_value#/storage/emulated/0/}" ;;
+        /storage/self/primary/*) sortify_path_value="/sdcard/${sortify_path_value#/storage/self/primary/}" ;;
+    esac
+
     printf '%s\n' "$sortify_path_value"
+}
+
+# Sortify runs as root, so it only touches shared storage and never Android/ (app data).
+sortify_is_safe_storage_path() {
+    case "$1" in
+        */.|*/./*|*/..|*/../*) return 1 ;;
+        "$SORTIFY_STORAGE_ROOT"/[Aa][Nn][Dd][Rr][Oo][Ii][Dd]|"$SORTIFY_STORAGE_ROOT"/[Aa][Nn][Dd][Rr][Oo][Ii][Dd]/*) return 1 ;;
+        "$SORTIFY_STORAGE_ROOT"|"$SORTIFY_STORAGE_ROOT"/*) return 0 ;;
+    esac
+    return 1
 }
 
 sortify_create_category_dirs() {
     sortify_base_path="$1"
+    sortify_is_safe_storage_path "$sortify_base_path" || return 1
     for sortify_dir in $SORTIFY_CATEGORY_DIRS; do
         mkdir -p "$sortify_base_path/$sortify_dir"
     done
@@ -195,7 +216,7 @@ sortify_rotate_log() {
 
 sortify_copy_log_to_base() {
     sortify_base_path="$1"
-    [ -n "$sortify_base_path" ] || return 0
+    sortify_is_safe_storage_path "$sortify_base_path" || return 0
     [ -f "$SORTIFY_LOG" ] || return 0
     cp "$SORTIFY_LOG" "$sortify_base_path/sortify.log" 2>/dev/null
 }

@@ -13,6 +13,7 @@ if [ -f "$MODDIR/common.sh" ]; then
     sortify_config_refresh
     BASE=$(sortify_config_get_string "base_path" "$SORTIFY_DEFAULT_BASE_PATH")
     BASE=$(sortify_normalize_dir "$BASE")
+    sortify_is_safe_storage_path "$BASE" || BASE="$SORTIFY_DEFAULT_BASE_PATH"
 fi
 
 LOG="$BASE/sortify.log"

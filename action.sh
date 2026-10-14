@@ -41,8 +41,6 @@ else
     DEPTH_OPT="-maxdepth 1"
 fi
 
-sortify_create_category_dirs "$BASE_PATH"
-
 log_categories() {
     sortify_log_msg "Enabled categories: Documents=$CATEGORY_DOCUMENTS Images=$CATEGORY_IMAGES Videos=$CATEGORY_VIDEOS Audio=$CATEGORY_AUDIO Archives=$CATEGORY_ARCHIVES Apps=$CATEGORY_APPS Magisk=$CATEGORY_MAGISK Others=$CATEGORY_OTHERS"
 }
@@ -99,16 +97,23 @@ is_excluded_path() {
 is_in_output_path() {
     sortify_file_path="$1"
     case "$sortify_file_path" in
-        "$BASE_PATH/Documents"/*|"$BASE_PATH/Images"/*|"$BASE_PATH/Videos"/*|"$BASE_PATH/Audio"/*|"$BASE_PATH/Archives"/*|"$BASE_PATH/Apps"/*|"$BASE_PATH/Magisk"/*|"$BASE_PATH/Others"/*|"$BASE_PATH/Duplicates"/*)
-            return 0
-            ;;
+        "$BASE_PATH/sortify.log") return 0 ;;
     esac
 
-    if [ "$BASE_PATH" != "$DOWNLOAD_PATH" ]; then
+    for sortify_output_dir in $SORTIFY_CATEGORY_DIRS; do
         case "$sortify_file_path" in
-            "$BASE_PATH"/*) return 0 ;;
+            "$BASE_PATH/$sortify_output_dir"/*) return 0 ;;
         esac
-    fi
+    done
+
+    # base_path inside download_path: skip the whole Sortify tree, not only category folders.
+    case "$BASE_PATH" in
+        "$DOWNLOAD_PATH"/*)
+            case "$sortify_file_path" in
+                "$BASE_PATH"/*) return 0 ;;
+            esac
+            ;;
+    esac
 
     return 1
 }
@@ -234,6 +239,23 @@ move_to_category() {
 }
 
 sortify_log_msg "Sort started. From: $DOWNLOAD_PATH To: $BASE_PATH (Recursive: $RECURSIVE)"
+
+SORTIFY_PATHS_OK=true
+if ! sortify_is_safe_storage_path "$DOWNLOAD_PATH" || [ "$DOWNLOAD_PATH" = "$SORTIFY_STORAGE_ROOT" ]; then
+    sortify_log_msg "Unsafe download_path: $DOWNLOAD_PATH"
+    SORTIFY_PATHS_OK=false
+fi
+if ! sortify_is_safe_storage_path "$BASE_PATH"; then
+    sortify_log_msg "Unsafe base_path: $BASE_PATH"
+    SORTIFY_PATHS_OK=false
+fi
+if [ "$SORTIFY_PATHS_OK" != "true" ]; then
+    sortify_log_msg "Sorting skipped. Paths must be inside $SORTIFY_STORAGE_ROOT, outside Android/, and download_path cannot be the storage root."
+    sortify_rotate_log
+    exit 1
+fi
+
+sortify_create_category_dirs "$BASE_PATH"
 log_categories
 
 if [ ! -d "$DOWNLOAD_PATH" ]; then

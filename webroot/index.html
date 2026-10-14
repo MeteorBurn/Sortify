@@ -1,589 +1,1083 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-    <title>Sortify v4.3.2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Sortify</title>
+    <!-- KernelSU / WebUI X serve this locally: it defines --window-inset-* for edge-to-edge layouts. -->
+    <link rel="stylesheet" href="https://mui.kernelsu.org/internal/insets.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg-start: #07111f;
-            --bg-end: #111827;
-            --card-bg: #162033;
-            --input-bg: #1d2a41;
-            --status-bg: #0d3146;
-            --log-bg: #0b1626;
-            --debug-bg: #2a1018;
-            --border: #2f4566;
-            --border-strong: #3e6b91;
+            color-scheme: dark;
+            --bg: #07111f;
+            --surface: #0f1a2b;
+            --surface-2: #15233a;
+            --surface-3: #1c2d48;
+            --log-bg: #08111e;
+            --border: #22344d;
+            --border-strong: #34506f;
             --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.14);
+            --accent-line: rgba(56, 189, 248, 0.4);
             --accent-secondary: #fb7185;
+            --accent-secondary-soft: rgba(251, 113, 133, 0.14);
+            --accent-secondary-line: rgba(251, 113, 133, 0.4);
             --text: #eaf6ff;
             --label: #c5d8ec;
             --muted: #8ea4bd;
-            --hint: #698299;
+            --hint: #6f88a1;
             --button-text: #061421;
-            --danger: #fb7185;
-            --danger-text: #26030a;
-            --shadow: rgba(0,0,0,0.34);
-            --glow: rgba(56, 189, 248, 0.35);
-            --overlay: rgba(4, 10, 18, 0.78);
+            --danger: #ff6b81;
+            --danger-soft: rgba(255, 107, 129, 0.14);
+            --duplicate: #fda4af;
+            --focus: #7dd3fc;
+            --shadow: rgba(0, 0, 0, 0.4);
+            --overlay: rgba(4, 10, 18, 0.72);
+            --radius: 16px;
+            --radius-sm: 12px;
+            --mono: ui-monospace, "Roboto Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+            --inset-top: var(--window-inset-top, env(safe-area-inset-top, 0px));
+            --inset-bottom: var(--window-inset-bottom, env(safe-area-inset-bottom, 0px));
         }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        [hidden] { display: none !important; }
+
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-size: 15px;
+            line-height: 1.45;
             color: var(--text);
-            padding: 20px;
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(900px 480px at 110% -8%, rgba(56, 189, 248, 0.16), transparent 62%),
+                radial-gradient(700px 420px at -25% 18%, rgba(251, 113, 133, 0.10), transparent 60%);
+            background-repeat: no-repeat;
             min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
         }
-        .container { 
-            max-width: 600px;
+
+        .i {
+            width: 20px;
+            height: 20px;
+            flex: 0 0 auto;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .mono { font-family: var(--mono); }
+
+        /* App bar */
+        .app-bar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            padding-top: var(--inset-top);
+            background: rgba(7, 17, 31, 0.82);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(34, 52, 77, 0.6);
+        }
+        .app-bar-inner,
+        .container,
+        .save-bar-inner {
+            max-width: 640px;
             margin: 0 auto;
+            padding-left: 16px;
+            padding-right: 16px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
+        .app-bar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 64px;
         }
-        .header h1 {
-            color: var(--accent);
-            font-size: 28px;
-            margin-bottom: 5px;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
         }
-        .header .version {
+        .logo { width: 40px; height: 40px; flex: 0 0 auto; }
+        .brand h1 {
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+        .app-sub {
             color: var(--muted);
-            font-size: 14px;
+            font-size: 12px;
         }
-        .card { 
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 12px;
+            border-radius: 999px;
             border: 1px solid var(--border);
-            box-shadow: 0 4px 12px var(--shadow);
+            background: var(--surface-2);
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 650;
+            white-space: nowrap;
         }
-        .card h2 {
+        .pill .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        .pill[data-state="on"] {
             color: var(--accent);
-            font-size: 18px;
+            background: var(--accent-soft);
+            border-color: var(--accent-line);
+        }
+        .pill[data-state="on"] .dot { box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.18); }
+        .pill[data-state="off"] {
+            color: var(--accent-secondary);
+            background: var(--accent-secondary-soft);
+            border-color: var(--accent-secondary-line);
+        }
+
+        .container {
+            padding-top: 16px;
+            padding-bottom: calc(104px + var(--inset-bottom));
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 6px 18px var(--shadow);
+        }
+        .card-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
         }
-        .form-group {
-            margin-bottom: 20px;
+        .card-head h2 {
+            font-size: 16px;
+            font-weight: 650;
         }
-        label {
+        .card-head .card-sub {
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+        .card-head-text { flex: 1; min-width: 0; }
+        .card-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: var(--accent-soft);
+            color: var(--accent);
+            flex: 0 0 auto;
+        }
+        .card-actions { display: flex; gap: 8px; }
+
+        .card-hero {
+            border: 1px solid transparent;
+            background:
+                linear-gradient(var(--surface), var(--surface)) padding-box,
+                linear-gradient(135deg, var(--accent), var(--accent-secondary)) border-box;
+        }
+        .hero-toggle {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+        }
+        .hero-text { flex: 1; min-width: 0; }
+        .hero-title {
             display: block;
-            margin-bottom: 8px;
-            color: var(--label);
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 18px;
+            font-weight: 700;
         }
-        label .hint {
+        .hero-sub {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 14px 0;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .hero-meta .i { width: 16px; height: 16px; }
+
+        /* Switch: styled native checkbox with role="switch" */
+        .switch {
+            appearance: none;
+            -webkit-appearance: none;
+            position: relative;
+            flex: 0 0 auto;
+            width: 48px;
+            height: 28px;
+            margin: 0;
+            border-radius: 999px;
+            border: 1px solid var(--border-strong);
+            background: var(--surface-3);
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .switch::before {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .switch:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .switch:checked::before {
+            transform: translateX(20px);
+            background: var(--button-text);
+        }
+        .switch-lg { width: 56px; height: 32px; }
+        .switch-lg::before { width: 24px; height: 24px; }
+        .switch-lg:checked::before { transform: translateX(24px); }
+
+        :focus-visible {
+            outline: 2px solid var(--focus);
+            outline-offset: 3px;
+        }
+
+        /* Fields */
+        .field { margin-bottom: 18px; }
+        .field:last-child { margin-bottom: 0; }
+        .field-top {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .field-top label {
+            color: var(--label);
+            font-size: 13.5px;
+            font-weight: 600;
+        }
+        .field-hint {
             color: var(--hint);
             font-size: 12px;
-            font-weight: normal;
-            margin-left: 4px;
+            text-align: right;
         }
         input[type="text"],
         input[type="number"],
         textarea {
             width: 100%;
-            padding: 12px;
-            background: var(--input-bg);
+            min-height: 46px;
+            padding: 11px 13px;
+            background: var(--surface-2);
             border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
             color: var(--text);
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: 'Courier New', monospace;
-            transition: border-color 0.2s;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s, background-color 0.2s;
         }
-        .path-control {
-            display: flex;
-            gap: 8px;
-            align-items: stretch;
-        }
-        .path-control input {
-            flex: 1;
-            min-width: 0;
-        }
-        .path-button,
-        .folder-picker-close {
-            width: 48px;
-            min-width: 48px;
-            padding: 0;
-            font-size: 18px;
-            line-height: 1;
-            border-radius: 6px;
-        }
-        .path-button {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
+        input.mono,
+        textarea { font-family: var(--mono); font-size: 14px; }
+        input::placeholder,
+        textarea::placeholder { color: var(--hint); }
         input:focus,
         textarea:focus {
             outline: none;
             border-color: var(--accent);
+            background: var(--surface-3);
         }
+        input:disabled { opacity: 0.45; }
         textarea {
             resize: vertical;
-            min-height: 80px;
-            line-height: 1.5;
+            min-height: 110px;
+            line-height: 1.6;
         }
-        .checkbox-group {
+        .field-error {
+            display: none;
+            margin-top: 7px;
+            color: var(--danger);
+            font-size: 12.5px;
+        }
+        .field.invalid .field-error { display: block; }
+        .field.invalid input { border-color: var(--danger); }
+        .field.is-disabled .field-top label { color: var(--hint); }
+
+        .path-control {
+            display: flex;
+            gap: 8px;
+        }
+        .path-control input { flex: 1; min-width: 0; }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .chip {
+            min-height: 34px;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--label);
+            font: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .chip[aria-pressed="true"] {
+            background: var(--accent-soft);
+            border-color: var(--accent-line);
+            color: var(--accent);
+        }
+
+        .row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 12px;
-            background: var(--input-bg);
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: var(--accent);
-        }
-        .checkbox-group label {
-            margin: 0;
-            cursor: pointer;
-            flex: 1;
-        }
-        .status-action {
-            margin-top: 14px;
-            background: var(--input-bg);
+            gap: 14px;
+            padding: 14px;
+            margin-bottom: 18px;
+            border-radius: var(--radius-sm);
             border: 1px solid var(--border);
-            color: var(--text);
+            background: var(--surface-2);
+            cursor: pointer;
         }
-        .status-action:disabled {
+        .row-text { flex: 1; min-width: 0; }
+        .row-title {
+            display: block;
+            font-weight: 600;
+        }
+        .row-sub {
+            display: block;
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+
+        /* Buttons */
+        button { font: inherit; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 46px;
+            padding: 0 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 650;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
+        }
+        .btn:hover { border-color: var(--border-strong); }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled {
             opacity: 0.65;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
         }
-        button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+        .btn-block { width: 100%; }
+        .btn-sm { min-height: 40px; padding: 0 14px; font-size: 14px; }
+        .icon-btn { width: 46px; padding: 0; flex: 0 0 auto; }
+        .btn-sm.icon-btn { width: 40px; }
+        .btn-ghost { background: transparent; border-color: transparent; }
+        .btn-primary {
+            border: 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
             color: var(--button-text);
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--glow);
-        }
-        button:active {
-            transform: translateY(0);
-        }
-        .path-button:hover {
-            background: var(--status-bg);
-            border-color: var(--border-strong);
-            transform: none;
-            box-shadow: none;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 12px;
-        }
-        .info-item {
-            background: var(--input-bg);
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--accent);
-        }
-        .info-item .category {
+        .btn-primary:hover { box-shadow: 0 6px 20px rgba(56, 189, 248, 0.3); }
+        .btn-accent {
+            background: var(--accent-soft);
+            border-color: var(--accent-line);
             color: var(--accent);
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 4px;
         }
-        .info-item .extensions {
+        .btn-danger {
+            background: var(--danger-soft);
+            border-color: rgba(255, 107, 129, 0.4);
+            color: var(--danger);
+        }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .is-busy .spinner { display: inline-block; }
+        .is-busy .btn-icon { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Categories */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 8px;
+        }
+        .category {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            cursor: pointer;
+            transition: opacity 0.2s, border-color 0.2s;
+        }
+        .category:has(.switch:checked) { border-color: rgba(56, 189, 248, 0.28); }
+        .category:has(.switch:not(:checked)) { opacity: 0.6; }
+        .category-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: var(--accent-soft);
+            color: var(--accent);
+            flex: 0 0 auto;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .category:has(.switch:not(:checked)) .category-icon {
+            background: var(--surface-3);
             color: var(--muted);
-            font-size: 12px;
-            font-family: 'Courier New', monospace;
         }
-        .category-toggle {
+        .category-text { flex: 1; min-width: 0; }
+        .category-name {
+            display: block;
+            font-size: 14.5px;
+            font-weight: 600;
+        }
+        .category-ext {
+            display: block;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 11.5px;
+        }
+        .note {
             display: flex;
             gap: 10px;
             align-items: flex-start;
-            cursor: pointer;
-            margin: 0;
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            background: var(--accent-secondary-soft);
+            color: var(--label);
+            font-size: 13px;
         }
-        .category-toggle input {
-            flex: 0 0 auto;
-            margin-top: 1px;
-        }
-        .category-copy {
-            min-width: 0;
-        }
-        .category-copy .category,
-        .category-copy .extensions {
-            display: block;
-        }
-        .badge {
-            display: inline-block;
-            background: var(--accent);
-            color: var(--button-text);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-            margin-left: 8px;
-        }
-        .folder-picker-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 900;
-            background: var(--overlay);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding: 16px;
-        }
-        .folder-picker-overlay.hidden {
-            display: none;
-        }
-        .folder-picker-modal {
-            width: 100%;
-            max-width: 600px;
-            max-height: 86vh;
-            background: var(--card-bg);
+        .note .i { color: var(--accent-secondary); width: 18px; height: 18px; margin-top: 1px; }
+        .note strong { color: var(--text); }
+
+        /* Log */
+        #log-viewer {
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: scroll;
+            overscroll-behavior: contain;
+            padding: 12px;
+            border-radius: var(--radius-sm);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+            background: var(--log-bg);
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 11.5px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .log-line .ts { color: var(--hint); }
+        .log-line.is-info { color: var(--accent); }
+        .log-line.is-move { color: var(--label); }
+        .log-line.is-duplicate { color: var(--duplicate); }
+        .log-line.is-error { color: var(--danger); }
+
+        /* Save bar */
+        .save-bar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 30;
+            padding-bottom: var(--inset-bottom);
+            background: rgba(7, 17, 31, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-top: 1px solid var(--border);
+        }
+        .save-bar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 72px;
+        }
+        .save-state {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 13.5px;
+        }
+        .save-state .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--hint);
+        }
+        .save-bar[data-dirty="true"] .save-state { color: var(--text); }
+        .save-bar[data-dirty="true"] .save-state .dot {
+            background: var(--accent-secondary);
+            box-shadow: 0 0 0 4px rgba(251, 113, 133, 0.2);
+        }
+        .save-bar[data-dirty="false"] .btn-primary {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--label);
+        }
+
+        /* Dialogs */
+        dialog {
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            overscroll-behavior: contain;
+        }
+        dialog::backdrop {
+            background: var(--overlay);
+            backdrop-filter: blur(3px);
+            overflow: hidden;
+            overscroll-behavior: contain;
+        }
+        .sheet {
+            width: 100%;
+            max-width: 640px;
+            max-height: 86vh;
+            margin: auto auto 0;
+            padding: 0;
+            border-bottom: 0;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
+        }
+        .sheet[open] {
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            animation: sheet-in 0.22s ease-out;
         }
-        .folder-picker-header {
+        @keyframes sheet-in {
+            from { transform: translateY(32px); opacity: 0; }
+        }
+        .sheet-grabber {
+            width: 40px;
+            height: 4px;
+            margin: 10px auto 0;
+            border-radius: 999px;
+            background: var(--border-strong);
+        }
+        .sheet-head {
             display: flex;
-            gap: 12px;
             align-items: flex-start;
-            justify-content: space-between;
-            padding: 18px;
-            border-bottom: 1px solid var(--border);
+            gap: 12px;
+            padding: 12px 16px 12px 20px;
         }
-        .folder-picker-header h2 {
+        .sheet-head-text { flex: 1; min-width: 0; }
+        .sheet-head h2 {
+            font-size: 17px;
+            margin-bottom: 6px;
+        }
+        .path-chip {
+            display: inline-block;
+            max-width: 100%;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: var(--surface-2);
             color: var(--accent);
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-        .folder-picker-current {
-            color: var(--muted);
-            font-family: 'Courier New', monospace;
             font-size: 12px;
             word-break: break-all;
         }
-        .folder-picker-roots,
-        .folder-picker-toolbar,
-        .folder-picker-footer {
+        .sheet-toolbar {
             display: flex;
             gap: 8px;
-            padding: 12px 18px;
+            padding: 0 16px 12px;
             border-bottom: 1px solid var(--border);
         }
-        .folder-picker-footer {
-            border-top: 1px solid var(--border);
-            border-bottom: none;
-        }
-        .folder-picker-roots button,
-        .folder-picker-toolbar button,
-        .folder-picker-footer button {
-            width: auto;
+        .folder-list {
             flex: 1;
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-        .folder-picker-list {
             min-height: 220px;
-            max-height: 46vh;
             overflow-y: auto;
+            overscroll-behavior: contain;
             padding: 8px;
             background: var(--log-bg);
         }
         .folder-entry {
-            width: 100%;
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 12px;
-            margin-bottom: 6px;
-            background: var(--input-bg);
+            gap: 12px;
+            width: 100%;
+            min-height: 50px;
+            padding: 10px 12px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
             color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            font-size: 15px;
             text-align: left;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: none;
+            cursor: pointer;
         }
-        .folder-entry:hover {
-            transform: none;
-            box-shadow: none;
-            border-color: var(--accent);
-        }
+        .folder-entry:hover,
+        .folder-entry:focus-visible { background: var(--surface-2); }
+        .folder-entry .folder-icon { color: var(--accent); }
+        .folder-entry .chevron { margin-left: auto; color: var(--hint); width: 18px; height: 18px; }
         .folder-entry-name {
+            min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
         .folder-picker-message {
+            padding: 24px 16px;
             color: var(--muted);
-            font-size: 13px;
-            line-height: 1.5;
-            padding: 16px;
+            font-size: 13.5px;
             text-align: center;
         }
-        #toast {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: var(--input-bg);
-            color: var(--text);
-            text-align: center;
-            border-radius: 8px;
-            padding: 16px;
+        .sheet-foot {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px calc(12px + var(--inset-bottom));
+            border-top: 1px solid var(--border);
+        }
+        .sheet-foot .btn { flex: 1; }
+
+        .confirm {
+            width: calc(100% - 32px);
+            max-width: 360px;
+            margin: auto;
+            padding: 22px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+        }
+        .confirm h2 { font-size: 17px; margin-bottom: 8px; }
+        .confirm p { color: var(--muted); font-size: 14px; }
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .confirm-actions .btn { flex: 1; }
+
+        /* Toast: popover="manual" keeps it above open dialogs */
+        .toast {
+            display: none;
             position: fixed;
-            z-index: 1000;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            top: auto;
+            left: 16px;
+            right: 16px;
+            bottom: calc(88px + var(--inset-bottom));
+            z-index: 50;
+            width: fit-content;
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-strong);
+            background: #1a2a43;
+            color: var(--text);
+            font-size: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
         }
-        #toast.show {
-            visibility: visible;
-            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        .toast.is-open {
+            display: block;
+            animation: toast-in 0.22s ease-out;
         }
-        #toast.error {
-            background-color: var(--danger);
-            color: var(--danger-text);
+        .toast.is-error {
+            background: #3a1420;
+            border-color: rgba(255, 107, 129, 0.5);
+            color: #ffd7de;
         }
-        @keyframes fadein {
-            from { bottom: 0; opacity: 0; }
-            to { bottom: 30px; opacity: 1; }
+        @keyframes toast-in {
+            from { transform: translateY(12px); opacity: 0; }
         }
-        @keyframes fadeout {
-            from { bottom: 30px; opacity: 1; }
-            to { bottom: 0; opacity: 0; }
+
+        .debug-info {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            background: var(--log-bg);
+            font-family: var(--mono);
+            font-size: 11px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .spinner { animation: spin 1.6s linear infinite !important; }
         }
     </style>
 </head>
 <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+        <defs>
+            <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7.5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+            <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z"/></symbol>
+            <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol>
+            <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+            <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></symbol>
+            <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+            <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></symbol>
+            <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></symbol>
+            <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/><path d="M9 7V4h6v3"/></symbol>
+            <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+            <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+            <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></symbol>
+            <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18h2"/></symbol>
+            <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+            <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+            <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
+            <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5.5" width="13" height="13" rx="2"/><path d="m16 10.5 5-3v9l-5-3"/></symbol>
+            <symbol id="i-audio" viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+            <symbol id="i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4.5" rx="1"/><path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5M10 12.5h4"/></symbol>
+            <symbol id="i-app" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 6h4M12 18h0"/></symbol>
+            <symbol id="i-cube" viewBox="0 0 24 24"><path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z"/><path d="M3.5 7 12 11.5 20.5 7M12 11.5v10"/></symbol>
+            <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="18" cy="12" r="1.6" fill="currentColor"/></symbol>
+            <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+        </defs>
+    </svg>
 
-    <div class="container">
-        <div class="header">
-            <h1>📁 Sortify</h1>
-            <div class="version">v4.3.2 Configuration</div>
-        </div>
-
-        <div class="card" style="border: 2px solid var(--accent);">
-            <h2>🔌 Module Status</h2>
-            
-            <div class="form-group">
-                <div class="checkbox-group" onclick="document.getElementById('enabled').click()" style="background: var(--status-bg); border: 1px solid var(--accent);">
-                    <input type="checkbox" id="enabled">
-                    <label style="color: var(--accent); font-weight: bold;">Enable Auto-Sorting</label>
-                </div>
-                <button type="button" id="run-sort-button" class="status-action" onclick="runSortNow()">⚡ Sort Now</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>⚙️ General Settings</h2>
-            
-            <div class="form-group">
-                <label>Sort Interval <span class="hint">(seconds)</span></label>
-                <input type="number" id="interval" placeholder="3600" min="10" step="10">
-            </div>
-
-            <div class="form-group">
-                <label>Base Path <span class="hint">(where to sort files)</span></label>
-                <div class="path-control">
-                    <input type="text" id="base_path" placeholder="/sdcard/Sortify">
-                    <button type="button" class="path-button" onclick="openFolderPicker('base_path')" aria-label="Choose Base Path" title="Choose folder">📁</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Download Path <span class="hint">(source folder)</span></label>
-                <div class="path-control">
-                    <input type="text" id="download_path" placeholder="/sdcard/Download">
-                    <button type="button" class="path-button" onclick="openFolderPicker('download_path')" aria-label="Choose Download Path" title="Choose folder">📁</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Enable recursive folder scanning</label>
-                <div class="checkbox-group" onclick="document.getElementById('recursive').click()">
-                    <input type="checkbox" id="recursive">
-                    <label>Enabled</label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Max Depth <span class="hint">(folder depth limit)</span></label>
-                <input type="number" id="max_depth" placeholder="5" min="1" max="10">
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>🚫 Exclude Folders</h2>
-            
-            <div class="form-group">
-                <label>Folder Names <span class="hint">(one per line)</span></label>
-                <textarea id="exclude_folders" placeholder="WhatsApp&#10;Music&#10;Screenshots"></textarea>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>📂 File Categories</h2>
-            <div class="info-grid">
-                <div class="info-item">
-                    <label class="category-toggle">
-                        <input type="checkbox" id="category_documents">
-                        <span class="category-copy">
-                            <span class="category">📄 Documents</span>
-                            <span class="extensions">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</span>
-                        </span>
-                    </label>
-                </div>
-                <div class="info-item">
-                    <label class="category-toggle">
-                        <input type="checkbox" id="category_images">
-                        <span class="category-copy">
-                            <span class="category">🖼️ Images</span>
-                            <span class="extensions">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</span>
-                        </span>
-                    </label>
-                </div>
-                <div class="info-item">
-                    <label class="category-toggle">
-                        <input type="checkbox" id="category_videos">
-                        <span class="category-copy">
-                            <span class="category">🎬 Videos</span>
-                            <span class="extensions">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</span>
-                        </span>
-                    </label>
-                </div>
-                <div class="info-item">
-                    <label class="category-toggle">
-                        <input type="checkbox" id="category_audio">
-                        <span class="category-copy">
-                            <span class="category">🎵 Audio</span>
-                            <span class="extensions">mp3, m4a, flac, wav, ogg, opus, aac, wma</span>
-                        </span>
-                    </label>
-                </div>
-                <div class="info-item">
-                    <label class="category-toggle">
-                        <input type="checkbox" id="category_archives">
-                        <span class="category-copy">
-                            <span class="category">📦 Archives</span>
-                            <span class="extensions">zip*, rar, 7z, tar, gz, bz2, iso</span>
-                        </span>
-                    </label>
-                </div>
-                <div class="info-item">
-                    <label class="category-toggle">
-                        <input type="checkbox" id="category_apps">
-                        <span class="category-copy">
-                            <span class="category">📱 Apps</span>
-                            <span class="extensions">apk, xapk, apks</span>
-                        </span>
-                    </label>
-                </div>
-                <div class="info-item">
-                    <label class="category-toggle">
-                        <input type="checkbox" id="category_magisk">
-                        <span class="category-copy">
-                            <span class="category">🧩 Magisk</span>
-                            <span class="extensions">zip files with module.prop</span>
-                        </span>
-                    </label>
-                </div>
-                <div class="info-item">
-                    <label class="category-toggle">
-                        <input type="checkbox" id="category_others">
-                        <span class="category-copy">
-                            <span class="category">📋 Others</span>
-                            <span class="extensions">all other files</span>
-                        </span>
-                    </label>
-                </div>
-                <div class="info-item">
-                    <div class="category">♻️ Duplicates</div>
-                    <div class="extensions">files with name conflicts</div>
-                </div>
-            </div>
-        </div>
-
-        <button onclick="saveConfig()">💾 Save Configuration</button>
-
-        <div class="card" style="margin-top: 20px;">
-            <h2>📋 Sortify Log</h2>
-            <p style="color: var(--muted); font-size: 12px; margin-bottom: 12px;">
-                Live log of sorting activity (last 200 lines)
-            </p>
-            <div id="log-viewer" style="background: var(--log-bg); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-wrap: break-word; min-height: 400px; max-height: 600px; overflow-y: scroll; color: var(--muted); line-height: 1.4;">
-                Loading log...
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 12px;">
-                <button onclick="loadLog()" style="flex: 1; background: var(--accent);">🔄 Refresh Log</button>
-                <button onclick="clearLog()" style="flex: 1; background: var(--danger); color: var(--danger-text);">🗑️ Clear Log</button>
-            </div>
-        </div>
-
-        <!-- Debug panel - hidden by default. To enable: remove display:none -->
-        <div class="card" style="margin-top: 20px; background: var(--debug-bg); border: 1px solid var(--danger); display: none;">
-            <h2 style="color: var(--danger);">🐛 Debug Info (для отладки)</h2>
-            <div id="debug-info" style="background: var(--log-bg); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;">
-                Загрузка...
-            </div>
-        </div>
-    </div>
-
-    <div id="folder-picker-overlay" class="folder-picker-overlay hidden">
-        <div class="folder-picker-modal" role="dialog" aria-modal="true" aria-labelledby="folder-picker-title">
-            <div class="folder-picker-header">
+    <header class="app-bar">
+        <div class="app-bar-inner">
+            <div class="brand">
+                <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="logo-gradient" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#38bdf8"/>
+                            <stop offset="1" stop-color="#fb7185"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="1" y="1" width="38" height="38" rx="11" fill="url(#logo-gradient)"/>
+                    <path d="M11 14.5a2 2 0 0 1 2-2h4.2l2.3 2.3H27a2 2 0 0 1 2 2V26a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2z" fill="none" stroke="#061421" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M15.5 21h9M15.5 24.5h5" stroke="#061421" stroke-width="2" stroke-linecap="round"/>
+                </svg>
                 <div>
-                    <h2 id="folder-picker-title">Choose Folder</h2>
-                    <div id="folder-picker-current" class="folder-picker-current">/sdcard</div>
+                    <h1>Sortify</h1>
+                    <p class="app-sub" id="module-version">v4.3.2</p>
                 </div>
-                <button type="button" class="folder-picker-close" onclick="closeFolderPicker()" aria-label="Close folder picker" title="Close">&times;</button>
             </div>
-            <div class="folder-picker-roots">
-                <button type="button" onclick="loadFolder('/sdcard')">Internal Storage</button>
+            <span class="pill" id="status-pill" data-state="unknown">
+                <span class="dot"></span>
+                <span id="status-text">Loading</span>
+            </span>
+        </div>
+    </header>
+
+    <main class="container">
+        <form id="settings" novalidate autocomplete="off">
+            <section class="card card-hero" aria-label="Module status">
+                <label class="hero-toggle" for="enabled">
+                    <span class="hero-text">
+                        <span class="hero-title">Auto-sorting</span>
+                        <span class="hero-sub" id="schedule-summary">/sdcard/Download → /sdcard/Sortify</span>
+                    </span>
+                    <input type="checkbox" class="switch switch-lg" id="enabled" role="switch">
+                </label>
+                <div class="hero-meta">
+                    <svg class="i" aria-hidden="true"><use href="#i-clock"/></svg>
+                    <span id="last-sort">Last sort: —</span>
+                </div>
+                <button type="button" id="run-sort-button" class="btn btn-accent btn-block" onclick="runSortNow()">
+                    <span class="spinner" aria-hidden="true"></span>
+                    <svg class="i btn-icon" aria-hidden="true"><use href="#i-bolt"/></svg>
+                    <span class="btn-label">Sort now</span>
+                </button>
+            </section>
+
+            <section class="card" aria-labelledby="general-title">
+                <div class="card-head">
+                    <span class="card-icon"><svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg></span>
+                    <h2 id="general-title">General</h2>
+                </div>
+
+                <div class="field">
+                    <div class="field-top">
+                        <label for="interval">Sort interval, seconds</label>
+                        <span class="field-hint" id="interval-human"></span>
+                    </div>
+                    <input type="number" id="interval" inputmode="numeric" min="10" step="10" placeholder="3600" aria-describedby="interval-human">
+                    <div class="chips" role="group" aria-label="Interval presets">
+                        <button type="button" class="chip" data-seconds="900">15 min</button>
+                        <button type="button" class="chip" data-seconds="3600">1 h</button>
+                        <button type="button" class="chip" data-seconds="21600">6 h</button>
+                        <button type="button" class="chip" data-seconds="43200">12 h</button>
+                        <button type="button" class="chip" data-seconds="86400">24 h</button>
+                    </div>
+                </div>
+
+                <div class="field" id="field-base_path">
+                    <div class="field-top">
+                        <label for="base_path">Base path</label>
+                        <span class="field-hint">sorted folders go here</span>
+                    </div>
+                    <div class="path-control">
+                        <input type="text" id="base_path" class="mono" placeholder="/sdcard/Sortify" autocapitalize="off" spellcheck="false" aria-describedby="base_path-error">
+                        <button type="button" class="btn icon-btn" onclick="openFolderPicker('base_path')" aria-label="Choose base path" title="Choose folder">
+                            <svg class="i" aria-hidden="true"><use href="#i-folder"/></svg>
+                        </button>
+                    </div>
+                    <p class="field-error" id="base_path-error"></p>
+                </div>
+
+                <div class="field" id="field-download_path">
+                    <div class="field-top">
+                        <label for="download_path">Download path</label>
+                        <span class="field-hint">files are taken from here</span>
+                    </div>
+                    <div class="path-control">
+                        <input type="text" id="download_path" class="mono" placeholder="/sdcard/Download" autocapitalize="off" spellcheck="false" aria-describedby="download_path-error">
+                        <button type="button" class="btn icon-btn" onclick="openFolderPicker('download_path')" aria-label="Choose download path" title="Choose folder">
+                            <svg class="i" aria-hidden="true"><use href="#i-folder"/></svg>
+                        </button>
+                    </div>
+                    <p class="field-error" id="download_path-error"></p>
+                </div>
+
+                <label class="row" for="recursive">
+                    <span class="row-text">
+                        <span class="row-title">Scan subfolders</span>
+                        <span class="row-sub">Also sort files inside folders of the download path</span>
+                    </span>
+                    <input type="checkbox" class="switch" id="recursive" role="switch">
+                </label>
+
+                <div class="field" id="field-max_depth">
+                    <div class="field-top">
+                        <label for="max_depth">Max depth</label>
+                        <span class="field-hint">1–10 folder levels</span>
+                    </div>
+                    <input type="number" id="max_depth" inputmode="numeric" min="1" max="10" placeholder="5">
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="exclude-title">
+                <div class="card-head">
+                    <span class="card-icon"><svg class="i" aria-hidden="true"><use href="#i-ban"/></svg></span>
+                    <div class="card-head-text">
+                        <h2 id="exclude-title">Exclude folders</h2>
+                        <p class="card-sub">One folder name per line. Matches at any depth.</p>
+                    </div>
+                </div>
+                <textarea id="exclude_folders" aria-labelledby="exclude-title" placeholder="WhatsApp&#10;Music&#10;Screenshots" spellcheck="false"></textarea>
+            </section>
+
+            <section class="card" aria-labelledby="categories-title">
+                <div class="card-head">
+                    <span class="card-icon"><svg class="i" aria-hidden="true"><use href="#i-grid"/></svg></span>
+                    <div class="card-head-text">
+                        <h2 id="categories-title">File categories</h2>
+                        <p class="card-sub">Disabled categories stay where they are.</p>
+                    </div>
+                </div>
+                <div class="category-grid">
+                    <label class="category" for="category_documents">
+                        <span class="category-icon"><svg class="i" aria-hidden="true"><use href="#i-doc"/></svg></span>
+                        <span class="category-text">
+                            <span class="category-name">Documents</span>
+                            <span class="category-ext">pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv</span>
+                        </span>
+                        <input type="checkbox" class="switch" id="category_documents" role="switch">
+                    </label>
+                    <label class="category" for="category_images">
+                        <span class="category-icon"><svg class="i" aria-hidden="true"><use href="#i-image"/></svg></span>
+                        <span class="category-text">
+                            <span class="category-name">Images</span>
+                            <span class="category-ext">jpg, jpeg, png, gif, bmp, webp, heic, heif, svg</span>
+                        </span>
+                        <input type="checkbox" class="switch" id="category_images" role="switch">
+                    </label>
+                    <label class="category" for="category_videos">
+                        <span class="category-icon"><svg class="i" aria-hidden="true"><use href="#i-video"/></svg></span>
+                        <span class="category-text">
+                            <span class="category-name">Videos</span>
+                            <span class="category-ext">mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp</span>
+                        </span>
+                        <input type="checkbox" class="switch" id="category_videos" role="switch">
+                    </label>
+                    <label class="category" for="category_audio">
+                        <span class="category-icon"><svg class="i" aria-hidden="true"><use href="#i-audio"/></svg></span>
+                        <span class="category-text">
+                            <span class="category-name">Audio</span>
+                            <span class="category-ext">mp3, m4a, flac, wav, ogg, opus, aac, wma</span>
+                        </span>
+                        <input type="checkbox" class="switch" id="category_audio" role="switch">
+                    </label>
+                    <label class="category" for="category_archives">
+                        <span class="category-icon"><svg class="i" aria-hidden="true"><use href="#i-archive"/></svg></span>
+                        <span class="category-text">
+                            <span class="category-name">Archives</span>
+                            <span class="category-ext">zip*, rar, 7z, tar, gz, bz2, iso</span>
+                        </span>
+                        <input type="checkbox" class="switch" id="category_archives" role="switch">
+                    </label>
+                    <label class="category" for="category_apps">
+                        <span class="category-icon"><svg class="i" aria-hidden="true"><use href="#i-app"/></svg></span>
+                        <span class="category-text">
+                            <span class="category-name">Apps</span>
+                            <span class="category-ext">apk, xapk, apks</span>
+                        </span>
+                        <input type="checkbox" class="switch" id="category_apps" role="switch">
+                    </label>
+                    <label class="category" for="category_magisk">
+                        <span class="category-icon"><svg class="i" aria-hidden="true"><use href="#i-cube"/></svg></span>
+                        <span class="category-text">
+                            <span class="category-name">Magisk modules</span>
+                            <span class="category-ext">zip with module.prop inside</span>
+                        </span>
+                        <input type="checkbox" class="switch" id="category_magisk" role="switch">
+                    </label>
+                    <label class="category" for="category_others">
+                        <span class="category-icon"><svg class="i" aria-hidden="true"><use href="#i-more"/></svg></span>
+                        <span class="category-text">
+                            <span class="category-name">Others</span>
+                            <span class="category-ext">all other files</span>
+                        </span>
+                        <input type="checkbox" class="switch" id="category_others" role="switch">
+                    </label>
+                </div>
+                <p class="note">
+                    <svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>
+                    <span><strong>Duplicates/</strong> receives files whose name already exists in the target folder.</span>
+                </p>
+            </section>
+        </form>
+
+        <section class="card" aria-labelledby="log-title">
+            <div class="card-head">
+                <span class="card-icon"><svg class="i" aria-hidden="true"><use href="#i-terminal"/></svg></span>
+                <div class="card-head-text">
+                    <h2 id="log-title">Sortify log</h2>
+                    <p class="card-sub">Last 200 lines</p>
+                </div>
+                <div class="card-actions">
+                    <button type="button" class="btn btn-sm icon-btn" onclick="loadLog()" aria-label="Refresh log" title="Refresh">
+                        <svg class="i" aria-hidden="true"><use href="#i-refresh"/></svg>
+                    </button>
+                    <button type="button" class="btn btn-sm icon-btn btn-danger" onclick="clearLog()" aria-label="Clear log" title="Clear">
+                        <svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>
+                    </button>
+                </div>
             </div>
-            <div class="folder-picker-toolbar">
-                <button type="button" onclick="loadParentFolder()">↑ Up</button>
-                <button type="button" onclick="loadFolder(folderPickerCurrentPath)">Refresh</button>
-            </div>
-            <div id="folder-picker-list" class="folder-picker-list">
-                <div class="folder-picker-message">Loading folders...</div>
-            </div>
-            <div class="folder-picker-footer">
-                <button type="button" onclick="closeFolderPicker()" style="background: var(--input-bg); color: var(--text); border: 1px solid var(--border);">Cancel</button>
-                <button type="button" onclick="useCurrentFolder()">Use This Folder</button>
-            </div>
+            <div id="log-viewer" role="log" tabindex="0" aria-labelledby="log-title">Loading log...</div>
+        </section>
+
+        <!-- Debug panel - hidden by default. To enable: remove the hidden attribute -->
+        <section class="card" id="debug-panel" hidden>
+            <div class="card-head"><h2>Debug info</h2></div>
+            <div id="debug-info" class="debug-info">Loading...</div>
+        </section>
+    </main>
+
+    <div class="save-bar" id="save-bar" data-dirty="false">
+        <div class="save-bar-inner">
+            <span class="save-state" aria-live="polite">
+                <span class="dot"></span>
+                <span id="save-state-text">All changes saved</span>
+            </span>
+            <button type="submit" form="settings" class="btn btn-primary">
+                <svg class="i" aria-hidden="true"><use href="#i-check"/></svg>
+                Save
+            </button>
         </div>
     </div>
 
-    <div id="toast">Settings Saved!</div>
+    <dialog id="folder-picker" class="sheet" closedby="any" aria-labelledby="folder-picker-title">
+        <div class="sheet-grabber" aria-hidden="true"></div>
+        <div class="sheet-head">
+            <div class="sheet-head-text">
+                <h2 id="folder-picker-title">Choose folder</h2>
+                <p id="folder-picker-current" class="path-chip mono">/sdcard</p>
+            </div>
+            <button type="button" class="btn icon-btn btn-ghost" onclick="closeFolderPicker()" aria-label="Close folder picker" title="Close">
+                <svg class="i" aria-hidden="true"><use href="#i-close"/></svg>
+            </button>
+        </div>
+        <div class="sheet-toolbar">
+            <button type="button" class="btn btn-sm" onclick="loadFolder('/sdcard')">
+                <svg class="i" aria-hidden="true"><use href="#i-phone"/></svg>
+                Storage
+            </button>
+            <button type="button" class="btn btn-sm" onclick="loadParentFolder()">
+                <svg class="i" aria-hidden="true"><use href="#i-up"/></svg>
+                Up
+            </button>
+            <button type="button" class="btn btn-sm icon-btn" onclick="loadFolder(folderPickerCurrentPath)" aria-label="Refresh folders" title="Refresh">
+                <svg class="i" aria-hidden="true"><use href="#i-refresh"/></svg>
+            </button>
+        </div>
+        <div id="folder-picker-list" class="folder-list">
+            <div class="folder-picker-message">Loading folders...</div>
+        </div>
+        <div class="sheet-foot">
+            <button type="button" class="btn" onclick="closeFolderPicker()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="useCurrentFolder()">Use this folder</button>
+        </div>
+    </dialog>
+
+    <dialog id="confirm-dialog" class="confirm" closedby="any" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+        <form method="dialog">
+            <h2 id="confirm-title">Are you sure?</h2>
+            <p id="confirm-text"></p>
+            <div class="confirm-actions">
+                <button value="cancel" class="btn" autofocus>Cancel</button>
+                <button value="ok" class="btn btn-danger" id="confirm-ok">OK</button>
+            </div>
+        </form>
+    </dialog>
+
+    <div id="toast" class="toast" popover="manual" role="status" aria-live="polite"></div>
 
     <script>
         const MODULE_DIR = "/data/adb/modules/sortify";
         const CONFIG_PATH = "/data/adb/modules/sortify/config.json";
         const LOG_PATH = "/data/adb/modules/sortify/sortify.log";
         const DEFAULT_INTERVAL = 3600;
+        const MIN_INTERVAL = 10;
+        const DEFAULT_BASE_PATH = '/sdcard/Sortify';
+        const DEFAULT_DOWNLOAD_PATH = '/sdcard/Download';
+        const DEFAULT_MAX_DEPTH = 5;
         const USER_STORAGE_ROOTS = ["/sdcard", "/storage/emulated/0"];
+        const STORAGE_ALIASES = ["/storage/emulated/0", "/storage/self/primary"];
         const DEFAULT_ENABLED_CATEGORIES = {
             documents: true,
             images: true,
@@ -595,8 +1089,24 @@
             others: true
         };
         const CATEGORY_KEYS = Object.keys(DEFAULT_ENABLED_CATEGORIES);
+        const DEFAULT_CONFIG = {
+            enabled: false,
+            interval: DEFAULT_INTERVAL,
+            base_path: DEFAULT_BASE_PATH,
+            download_path: DEFAULT_DOWNLOAD_PATH,
+            recursive: true,
+            max_depth: DEFAULT_MAX_DEPTH,
+            enabled_categories: DEFAULT_ENABLED_CATEGORIES,
+            exclude_folders: ['WhatsApp', 'Music', 'Screenshots']
+        };
+        const SUPPORTS_POPOVER = 'popover' in HTMLElement.prototype;
         let folderPickerTargetId = null;
         let folderPickerCurrentPath = "/sdcard";
+        let savedSnapshot = null;
+        let savedEnabled = null;
+        let toastTimer = null;
+
+        const byId = id => document.getElementById(id);
 
         function execOutput(result) {
             if (typeof result === 'string') {
@@ -630,13 +1140,16 @@
             return USER_STORAGE_ROOTS.some(root => cleanPath === root || cleanPath.startsWith(root + '/'));
         }
 
+        // Same spelling as common.sh sortify_normalize_dir.
         function toShortStoragePath(path) {
             const cleanPath = normalizePath(path);
-            if (cleanPath === '/storage/emulated/0') {
-                return '/sdcard';
-            }
-            if (cleanPath.startsWith('/storage/emulated/0/')) {
-                return '/sdcard/' + cleanPath.slice('/storage/emulated/0/'.length);
+            for (const alias of STORAGE_ALIASES) {
+                if (cleanPath === alias) {
+                    return '/sdcard';
+                }
+                if (cleanPath.startsWith(alias + '/')) {
+                    return '/sdcard/' + cleanPath.slice(alias.length + 1);
+                }
             }
             return cleanPath;
         }
@@ -650,6 +1163,32 @@
                 return '/storage/emulated/0/' + cleanPath.slice('/sdcard/'.length);
             }
             return cleanPath;
+        }
+
+        function isProtectedStoragePath(path) {
+            return /^\/sdcard\/android(\/|$)/i.test(toShortStoragePath(path));
+        }
+
+        // Mirrors sortify_is_safe_storage_path in common.sh; action.sh refuses anything else.
+        function storagePathError(rawValue, isDownloadPath) {
+            const value = (rawValue || '').trim();
+            if (!value) {
+                return '';
+            }
+            const path = toShortStoragePath(value);
+            if (path.split('/').some(part => part === '.' || part === '..')) {
+                return 'Use a full path without "." or "..".';
+            }
+            if (path !== '/sdcard' && !path.startsWith('/sdcard/')) {
+                return 'Must be inside internal storage (/sdcard/...).';
+            }
+            if (isProtectedStoragePath(path)) {
+                return 'Android/ holds app data and cannot be used.';
+            }
+            if (isDownloadPath && path === '/sdcard') {
+                return 'Pick a folder: sorting the whole storage is not allowed.';
+            }
+            return '';
         }
 
         function uniquePaths(paths) {
@@ -692,7 +1231,41 @@
         }
 
         async function writeTextFile(path, text) {
-            await ksu.exec(`cat > ${shellQuote(path)} << 'EOFSORTIFY'\n${text}\nEOFSORTIFY`);
+            const output = await runShell(`cat > ${shellQuote(path)} << 'EOFSORTIFY' && echo __SORTIFY_OK__\n${text}\nEOFSORTIFY`);
+            if (!output.includes('__SORTIFY_OK__')) {
+                throw new Error('could not write ' + path);
+            }
+        }
+
+        // ksu.exec blocks the page, so let the browser paint the busy state first.
+        function nextPaint() {
+            return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+        }
+
+        function svgIcon(name, className) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'i ' + (className || ''));
+            svg.setAttribute('aria-hidden', 'true');
+            const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+            use.setAttribute('href', '#' + name);
+            svg.appendChild(use);
+            return svg;
+        }
+
+        function formatInterval(seconds) {
+            const units = [[86400, 'd'], [3600, 'h'], [60, 'min']];
+            for (const [size, label] of units) {
+                if (seconds >= size && seconds % size === 0) {
+                    return `${seconds / size} ${label}`;
+                }
+            }
+            if (seconds >= 3600) {
+                return `≈ ${(seconds / 3600).toFixed(1).replace(/\.0$/, '')} h`;
+            }
+            if (seconds >= 60) {
+                return `≈ ${Math.round(seconds / 60)} min`;
+            }
+            return `${seconds} s`;
         }
 
         function getEnabledCategories(config) {
@@ -709,7 +1282,7 @@
 
         function setCategoryCheckboxes(enabledCategories) {
             CATEGORY_KEYS.forEach(key => {
-                const checkbox = document.getElementById(`category_${key}`);
+                const checkbox = byId(`category_${key}`);
                 if (checkbox) {
                     checkbox.checked = enabledCategories[key] !== false;
                 }
@@ -719,10 +1292,116 @@
         function collectEnabledCategories() {
             const enabledCategories = {};
             CATEGORY_KEYS.forEach(key => {
-                const checkbox = document.getElementById(`category_${key}`);
+                const checkbox = byId(`category_${key}`);
                 enabledCategories[key] = checkbox ? checkbox.checked : true;
             });
             return enabledCategories;
+        }
+
+        function applyConfigToForm(config) {
+            byId('enabled').checked = config.enabled === true;
+            byId('interval').value = config.interval || DEFAULT_INTERVAL;
+            byId('base_path').value = config.base_path || DEFAULT_BASE_PATH;
+            byId('download_path').value = config.download_path || DEFAULT_DOWNLOAD_PATH;
+            byId('recursive').checked = config.recursive !== false;
+            byId('max_depth').value = config.max_depth || DEFAULT_MAX_DEPTH;
+            setCategoryCheckboxes(getEnabledCategories(config));
+            byId('exclude_folders').value = Array.isArray(config.exclude_folders) ? config.exclude_folders.join('\n') : '';
+        }
+
+        function readNumber(id, fallback, min, max) {
+            const value = parseInt(byId(id).value, 10);
+            if (!Number.isFinite(value) || value <= 0) {
+                return fallback;
+            }
+            return Math.min(max, Math.max(min, value));
+        }
+
+        function readPath(id, fallback) {
+            const value = byId(id).value.trim();
+            return value ? toShortStoragePath(value) : fallback;
+        }
+
+        function collectConfig() {
+            return {
+                enabled: byId('enabled').checked,
+                interval: readNumber('interval', DEFAULT_INTERVAL, MIN_INTERVAL, Number.MAX_SAFE_INTEGER),
+                base_path: readPath('base_path', DEFAULT_BASE_PATH),
+                download_path: readPath('download_path', DEFAULT_DOWNLOAD_PATH),
+                recursive: byId('recursive').checked,
+                max_depth: readNumber('max_depth', DEFAULT_MAX_DEPTH, 1, 10),
+                enabled_categories: collectEnabledCategories(),
+                exclude_folders: byId('exclude_folders').value
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0)
+            };
+        }
+
+        function isDirty() {
+            return savedSnapshot !== null && JSON.stringify(collectConfig()) !== savedSnapshot;
+        }
+
+        function setFieldError(id, message) {
+            const field = byId(`field-${id}`);
+            const input = byId(id);
+            field.classList.toggle('invalid', Boolean(message));
+            byId(`${id}-error`).textContent = message;
+            if (message) {
+                input.setAttribute('aria-invalid', 'true');
+            } else {
+                input.removeAttribute('aria-invalid');
+            }
+        }
+
+        function validatePaths() {
+            let firstInvalid = null;
+            [['base_path', false], ['download_path', true]].forEach(([id, isDownloadPath]) => {
+                const message = storagePathError(byId(id).value, isDownloadPath);
+                setFieldError(id, message);
+                if (message && !firstInvalid) {
+                    firstInvalid = byId(id);
+                }
+            });
+            return firstInvalid;
+        }
+
+        function updateStatusPill() {
+            const pill = byId('status-pill');
+            if (savedEnabled === null) {
+                pill.dataset.state = 'unknown';
+                byId('status-text').textContent = typeof ksu === 'undefined' ? 'Preview' : 'Loading';
+                return;
+            }
+            pill.dataset.state = savedEnabled ? 'on' : 'off';
+            byId('status-text').textContent = savedEnabled ? 'Active' : 'Paused';
+        }
+
+        function refreshForm() {
+            const config = collectConfig();
+            const dirty = isDirty();
+
+            byId('save-bar').dataset.dirty = String(dirty);
+            byId('save-state-text').textContent = dirty ? 'Unsaved changes' : 'All changes saved';
+
+            byId('interval-human').textContent = formatInterval(config.interval);
+            document.querySelectorAll('.chip[data-seconds]').forEach(chip => {
+                chip.setAttribute('aria-pressed', String(Number(chip.dataset.seconds) === config.interval));
+            });
+
+            const depthInput = byId('max_depth');
+            depthInput.disabled = !config.recursive;
+            byId('field-max_depth').classList.toggle('is-disabled', !config.recursive);
+
+            byId('schedule-summary').textContent =
+                `${config.download_path} → ${config.base_path} · every ${formatInterval(config.interval).replace(/^≈ /, '')}`;
+        }
+
+        function markSaved() {
+            savedSnapshot = JSON.stringify(collectConfig());
+            savedEnabled = byId('enabled').checked;
+            updateStatusPill();
+            refreshForm();
         }
 
         function getParentPath(path) {
@@ -748,7 +1427,7 @@
         }
 
         function setFolderPickerMessage(message) {
-            const list = document.getElementById('folder-picker-list');
+            const list = byId('folder-picker-list');
             list.innerHTML = '';
             const item = document.createElement('div');
             item.className = 'folder-picker-message';
@@ -757,11 +1436,11 @@
         }
 
         function renderFolderList(dirs) {
-            const list = document.getElementById('folder-picker-list');
+            const list = byId('folder-picker-list');
             list.innerHTML = '';
 
             if (!dirs.length) {
-                setFolderPickerMessage('No subfolders found.');
+                setFolderPickerMessage('No subfolders here.');
                 return;
             }
 
@@ -771,16 +1450,31 @@
                 button.className = 'folder-entry';
                 button.onclick = () => loadFolder(dir);
 
-                const icon = document.createElement('span');
-                icon.textContent = '📁';
-
                 const name = document.createElement('span');
                 name.className = 'folder-entry-name';
                 name.textContent = basename(dir);
 
-                button.appendChild(icon);
+                button.appendChild(svgIcon('i-folder', 'folder-icon'));
                 button.appendChild(name);
+                button.appendChild(svgIcon('i-chevron', 'chevron'));
                 list.appendChild(button);
+            });
+        }
+
+        function enableLightDismissFallback(dialog) {
+            if ('closedBy' in HTMLDialogElement.prototype) {
+                return;
+            }
+            dialog.addEventListener('click', event => {
+                if (event.target !== dialog) {
+                    return;
+                }
+                const rect = dialog.getBoundingClientRect();
+                const isInside = rect.top <= event.clientY && event.clientY <= rect.top + rect.height &&
+                    rect.left <= event.clientX && event.clientX <= rect.left + rect.width;
+                if (!isInside) {
+                    dialog.close();
+                }
             });
         }
 
@@ -791,15 +1485,14 @@
             }
 
             folderPickerTargetId = targetId;
-            const input = document.getElementById(targetId);
+            const input = byId(targetId);
             folderPickerCurrentPath = getSafeFolderStartPath(input.value || '/sdcard');
-            document.getElementById('folder-picker-overlay').classList.remove('hidden');
+            byId('folder-picker').showModal();
             await loadFolder(folderPickerCurrentPath);
         }
 
         function closeFolderPicker() {
-            document.getElementById('folder-picker-overlay').classList.add('hidden');
-            folderPickerTargetId = null;
+            byId('folder-picker').close();
         }
 
         async function loadParentFolder() {
@@ -814,8 +1507,9 @@
                 return;
             }
             folderPickerCurrentPath = targetPath;
-            document.getElementById('folder-picker-current').textContent = targetPath;
+            byId('folder-picker-current').textContent = targetPath;
             setFolderPickerMessage('Loading folders...');
+            await nextPaint();
 
             try {
                 const browsePath = toBrowseStoragePath(targetPath);
@@ -840,8 +1534,9 @@
                 }
 
                 folderPickerCurrentPath = resolvedPath;
-                document.getElementById('folder-picker-current').textContent = resolvedPath;
-                renderFolderList(uniquePaths(lines.map(toShortStoragePath).filter(isUserStoragePath)));
+                byId('folder-picker-current').textContent = resolvedPath;
+                renderFolderList(uniquePaths(lines.map(toShortStoragePath).filter(isUserStoragePath))
+                    .filter(dir => !isProtectedStoragePath(dir)));
             } catch (e) {
                 setFolderPickerMessage('Unable to load folders: ' + e.message);
             }
@@ -852,9 +1547,30 @@
                 closeFolderPicker();
                 return;
             }
-            document.getElementById(folderPickerTargetId).value = toShortStoragePath(folderPickerCurrentPath);
+            const path = toShortStoragePath(folderPickerCurrentPath);
+            const message = storagePathError(path, folderPickerTargetId === 'download_path');
+            if (message) {
+                showToast(message, true);
+                return;
+            }
+            const targetId = folderPickerTargetId;
+            byId(targetId).value = path;
+            setFieldError(targetId, '');
             closeFolderPicker();
-            showToast('Folder selected.', false);
+            refreshForm();
+            showToast('Folder selected. Save to apply.', false);
+        }
+
+        function confirmDialog(title, text, okLabel) {
+            const dialog = byId('confirm-dialog');
+            byId('confirm-title').textContent = title;
+            byId('confirm-text').textContent = text;
+            byId('confirm-ok').textContent = okLabel;
+            dialog.returnValue = '';
+            return new Promise(resolve => {
+                dialog.addEventListener('close', () => resolve(dialog.returnValue === 'ok'), { once: true });
+                dialog.showModal();
+            });
         }
 
         async function runSortNow() {
@@ -863,11 +1579,15 @@
                 return;
             }
 
-            const button = document.getElementById('run-sort-button');
+            const button = byId('run-sort-button');
+            const label = button.querySelector('.btn-label');
             button.disabled = true;
-            button.textContent = '⏳ Sorting...';
+            button.classList.add('is-busy');
+            label.textContent = 'Sorting...';
+            await nextPaint();
 
             try {
+                // Prints the exit code: ksu.exec returns stdout only.
                 const command = [
                     `MODDIR=${shellQuote(MODULE_DIR)}`,
                     `LOG=${shellQuote(LOG_PATH)}`,
@@ -875,21 +1595,39 @@
                     'sh "$MODDIR/action.sh" >> "$LOG" 2>&1',
                     'code=$?',
                     'if [ "$code" -eq 0 ]; then echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort completed from WebUI." >> "$LOG"; else echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort failed from WebUI. Exit code: $code" >> "$LOG"; fi',
-                    'exit "$code"'
+                    'echo "__SORTIFY_EXIT__$code"'
                 ].join('; ');
 
                 const output = await runShell(command);
+                const match = output.match(/__SORTIFY_EXIT__(\d+)/);
+                const exitCode = match ? Number(match[1]) : 0;
                 await loadLog();
-                if (output) {
-                    console.log(output);
+                if (exitCode !== 0) {
+                    showToast('Sorting failed or was skipped. See the log.', true);
+                } else if (isDirty()) {
+                    showToast('Sorted with saved settings. Unsaved changes were not used.', false);
+                } else {
+                    showToast('Sorting finished.', false);
                 }
-                showToast('✅ Manual sorting finished.', false);
             } catch (e) {
                 await loadLog();
-                showToast('❌ Manual sorting failed: ' + e.message, true);
+                showToast('Manual sorting failed: ' + e.message, true);
             } finally {
                 button.disabled = false;
-                button.textContent = '⚡ Sort Now';
+                button.classList.remove('is-busy');
+                label.textContent = 'Sort now';
+            }
+        }
+
+        async function loadModuleVersion() {
+            try {
+                const output = await runShell(`sed -n 's/^version=//p; s/^versionCode=//p' ${shellQuote(MODULE_DIR + '/module.prop')}`);
+                const [version, versionCode] = output.split('\n').map(line => line.trim());
+                if (version) {
+                    byId('module-version').textContent = versionCode ? `v${version} · build ${versionCode}` : `v${version}`;
+                }
+            } catch (e) {
+                console.log('Version read failed:', e);
             }
         }
 
@@ -900,162 +1638,203 @@
             try {
                 debugInfo += "Reading config via base64...\n";
                 const jsonText = (await readShellBase64(`if [ -f ${shellQuote(CONFIG_PATH)} ]; then cat ${shellQuote(CONFIG_PATH)}; else printf '{}'; fi`)).trim();
-                
+
                 debugInfo += "JSON length: " + jsonText.length + " chars\n";
                 debugInfo += "First 50 chars: " + jsonText.substring(0, 50) + "...\n";
-                
-                if (!jsonText || jsonText === '') {
+
+                if (!jsonText) {
                     throw new Error("Config file is empty");
                 }
 
                 const config = JSON.parse(jsonText);
-                
+
                 debugInfo += "======================\n";
                 debugInfo += "✅ Config loaded successfully!\n\n";
                 debugInfo += "Parsed config:\n" + JSON.stringify(config, null, 2);
-                document.getElementById('debug-info').textContent = debugInfo;
-
-                // Populate form fields
-                document.getElementById('enabled').checked = config.enabled || false;
-                document.getElementById('interval').value = config.interval || DEFAULT_INTERVAL;
-                document.getElementById('base_path').value = config.base_path || '/sdcard/Sortify';
-                document.getElementById('download_path').value = config.download_path || '/sdcard/Download';
-                document.getElementById('recursive').checked = config.recursive || false;
-                document.getElementById('max_depth').value = config.max_depth || 5;
-                setCategoryCheckboxes(getEnabledCategories(config));
-                
-                // Handle exclude_folders array
-                if (config.exclude_folders && Array.isArray(config.exclude_folders)) {
-                    document.getElementById('exclude_folders').value = config.exclude_folders.join('\n');
-                }
+                applyConfigToForm(config);
             } catch (e) {
                 debugInfo += "\n❌ ERROR: " + e.message + "\n";
                 debugInfo += "Error stack: " + (e.stack || "no stack") + "\n";
-                document.getElementById('debug-info').textContent = debugInfo;
-                
-                // Set defaults silently
-                document.getElementById('enabled').checked = false;
-                document.getElementById('interval').value = DEFAULT_INTERVAL;
-                document.getElementById('base_path').value = '/sdcard/Sortify';
-                document.getElementById('download_path').value = '/sdcard/Download';
-                document.getElementById('recursive').checked = true;
-                document.getElementById('max_depth').value = 5;
-                setCategoryCheckboxes(DEFAULT_ENABLED_CATEGORIES);
-                document.getElementById('exclude_folders').value = 'WhatsApp\nMusic\nScreenshots';
+                applyConfigToForm(DEFAULT_CONFIG);
+                showToast('Could not read config. Showing defaults.', true);
+            } finally {
+                byId('debug-info').textContent = debugInfo;
+                validatePaths();
+                markSaved();
             }
         }
 
-        // Save config
         async function saveConfig() {
+            if (typeof ksu === 'undefined') {
+                showToast('Saving works only inside KernelSU/WebUI.', true);
+                return;
+            }
+
+            const firstInvalid = validatePaths();
+            if (firstInvalid) {
+                firstInvalid.focus();
+                showToast('Fix the highlighted path first.', true);
+                return;
+            }
+
             try {
-                // Get form values
-                const enabled = document.getElementById('enabled').checked;
-                const interval = parseInt(document.getElementById('interval').value) || DEFAULT_INTERVAL;
-                const base_path = document.getElementById('base_path').value.trim() || '/sdcard/Sortify';
-                const download_path = document.getElementById('download_path').value.trim() || '/sdcard/Download';
-                const recursive = document.getElementById('recursive').checked;
-                const max_depth = parseInt(document.getElementById('max_depth').value) || 5;
-                const enabled_categories = collectEnabledCategories();
-                
-                // Parse exclude_folders (split by newline, filter empty)
-                const exclude_text = document.getElementById('exclude_folders').value;
-                const exclude_folders = exclude_text
-                    .split('\n')
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0);
-
-                // Build config object
-                const config = {
-                    enabled,
-                    interval,
-                    base_path,
-                    download_path,
-                    recursive,
-                    max_depth,
-                    enabled_categories,
-                    exclude_folders
-                };
-
-                const jsonString = JSON.stringify(config, null, 4);
-
-                await writeTextFile(CONFIG_PATH, jsonString);
-
-                showToast("✅ Configuration saved successfully!", false);
+                const config = collectConfig();
+                await writeTextFile(CONFIG_PATH, JSON.stringify(config, null, 4));
+                applyConfigToForm(config);
+                markSaved();
+                showToast('Settings saved.', false);
             } catch (e) {
                 console.error("Write Error:", e);
-                showToast("❌ Error saving config: " + e, true);
+                showToast('Error saving config: ' + e.message, true);
             }
         }
 
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById("toast");
-            toast.innerText = msg;
-            toast.className = isError ? "show error" : "show";
-            setTimeout(function() {
-                toast.className = toast.className.replace("show", "");
-            }, 3000);
+        function showToast(message, isError = false) {
+            const toast = byId('toast');
+            toast.textContent = message;
+            toast.classList.toggle('is-error', isError);
+            toast.classList.remove('is-open');
+            void toast.offsetWidth;
+            toast.classList.add('is-open');
+            if (SUPPORTS_POPOVER) {
+                // Re-open so the toast lands above any dialog opened since.
+                if (toast.matches(':popover-open')) {
+                    toast.hidePopover();
+                }
+                toast.showPopover();
+            }
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('is-open');
+                if (SUPPORTS_POPOVER && toast.matches(':popover-open')) {
+                    toast.hidePopover();
+                }
+            }, 3200);
+        }
+
+        function logLineClass(line) {
+            if (/failed|unsafe|skipped\.|missing|error/i.test(line)) {
+                return 'is-error';
+            }
+            if (line.includes('Duplicate:')) {
+                return 'is-duplicate';
+            }
+            if (line.includes('Moved:')) {
+                return 'is-move';
+            }
+            if (/Sort started|Sort completed|Manual sort|Module enabled|Module disabled|Cycle done|Next sort/.test(line)) {
+                return 'is-info';
+            }
+            return '';
+        }
+
+        function renderLog(text) {
+            const viewer = byId('log-viewer');
+            const fragment = document.createDocumentFragment();
+            text.replace(/\n+$/, '').split('\n').forEach(line => {
+                const row = document.createElement('div');
+                row.className = 'log-line ' + logLineClass(line);
+                const match = line.match(/^(\[[^\]]+\])(.*)$/);
+                if (match) {
+                    const ts = document.createElement('span');
+                    ts.className = 'ts';
+                    ts.textContent = match[1];
+                    row.appendChild(ts);
+                    row.appendChild(document.createTextNode(match[2]));
+                } else {
+                    row.textContent = line || ' ';
+                }
+                fragment.appendChild(row);
+            });
+            viewer.innerHTML = '';
+            viewer.appendChild(fragment);
+            viewer.scrollTop = viewer.scrollHeight;
+        }
+
+        function updateLastSort(logText) {
+            const matches = [...logText.matchAll(/^\[([^\]]+)\] Sort completed/gm)];
+            const last = matches.length ? matches[matches.length - 1][1] : null;
+            byId('last-sort').textContent = last ? `Last sort: ${last}` : 'Last sort: none in recent log';
         }
 
         // Load log file
         async function loadLog() {
-            const logViewer = document.getElementById('log-viewer');
-            
+            const fallbackLog = 'No log file found yet. Module will create it after first run.';
+            let logText = '';
+
             try {
-                logViewer.textContent = "Loading log...";
-                
                 // Use base64 so ksu.exec returns complete multiline output as one line.
-                const fallbackLog = 'No log file found yet. Module will create it after first run.';
-                
-                let logText = '';
-                try {
-                    logText = await readShellBase64(`if [ -f ${shellQuote(LOG_PATH)} ]; then tail -n 200 ${shellQuote(LOG_PATH)}; else printf %s ${shellQuote(fallbackLog)}; fi`);
-                } catch (decodeError) {
-                    logText = "Error decoding log: " + decodeError.message;
-                }
-                
-                if (logText.trim() === '') {
-                    logText = "Log is empty. Module will log activity here.";
-                }
-                
-                logViewer.textContent = logText;
-                // Auto-scroll to bottom
-                logViewer.scrollTop = logViewer.scrollHeight;
+                logText = await readShellBase64(`if [ -f ${shellQuote(LOG_PATH)} ]; then tail -n 200 ${shellQuote(LOG_PATH)}; else printf %s ${shellQuote(fallbackLog)}; fi`);
             } catch (e) {
-                logViewer.textContent = "Error loading log: " + e.message;
+                logText = "Error loading log: " + e.message;
             }
+
+            if (logText.trim() === '') {
+                logText = "Log is empty. Module will log activity here.";
+            }
+
+            renderLog(logText);
+            updateLastSort(logText);
         }
 
         // Clear log file
         async function clearLog() {
-            if (!confirm("Are you sure you want to clear the log?")) {
+            if (typeof ksu === 'undefined') {
+                showToast('Log works only inside KernelSU/WebUI.', true);
+                return;
+            }
+            const confirmed = await confirmDialog('Clear the log?', 'All log lines will be removed. Sorted files are not affected.', 'Clear');
+            if (!confirmed) {
                 return;
             }
 
             try {
                 await runShell(`: > ${shellQuote(LOG_PATH)}`);
-                showToast("✅ Log cleared successfully!", false);
-                await loadLog(); // Reload to show empty log
+                showToast('Log cleared.', false);
+                await loadLog();
             } catch (e) {
-                showToast("❌ Error clearing log: " + e.message, true);
+                showToast('Error clearing log: ' + e.message, true);
             }
         }
 
+        // Wire up the form
+        const settingsForm = byId('settings');
+        settingsForm.addEventListener('submit', event => {
+            event.preventDefault();
+            saveConfig();
+        });
+        settingsForm.addEventListener('input', event => {
+            if (event.target.id === 'base_path' || event.target.id === 'download_path') {
+                setFieldError(event.target.id, '');
+            }
+            refreshForm();
+        });
+        settingsForm.addEventListener('change', refreshForm);
+        document.querySelectorAll('.chip[data-seconds]').forEach(chip => {
+            chip.addEventListener('click', () => {
+                byId('interval').value = chip.dataset.seconds;
+                refreshForm();
+            });
+        });
+        byId('folder-picker').addEventListener('close', () => {
+            folderPickerTargetId = null;
+        });
+        enableLightDismissFallback(byId('folder-picker'));
+        enableLightDismissFallback(byId('confirm-dialog'));
+
         // Initialize
         if (typeof ksu !== 'undefined') {
+            loadModuleVersion();
             loadConfig();
             loadLog(); // Load log on startup
         } else {
             // Fallback for browser testing
             console.log("Not in KernelSU environment");
-            document.getElementById('enabled').checked = false;
-            document.getElementById('interval').value = DEFAULT_INTERVAL;
-            document.getElementById('base_path').value = '/sdcard/Sortify';
-            document.getElementById('download_path').value = '/sdcard/Download';
-            document.getElementById('recursive').checked = true;
-            document.getElementById('max_depth').value = 5;
-            setCategoryCheckboxes(DEFAULT_ENABLED_CATEGORIES);
-            document.getElementById('exclude_folders').value = 'WhatsApp\nMusic\nScreenshots';
-            document.getElementById('log-viewer').textContent = 'Log viewer only works in KernelSU environment';
+            applyConfigToForm(DEFAULT_CONFIG);
+            markSaved();
+            savedEnabled = null;
+            updateStatusPill();
+            renderLog('Log viewer only works in KernelSU environment');
         }
     </script>
 

@@ -51,13 +51,38 @@ chooseport() {
 
 ui_print "- Installing Sortify v${MODULE_VERSION} (versionCode: ${MODULE_VERSION_CODE})"
 
+# Updates are installed into modules_update/, which replaces modules/ on reboot.
+# Carry the user's config over so an update does not reset their settings.
+SORTIFY_INSTALLED_CONFIG="${MODPATH%/*/*}/modules/${MODPATH##*/}/config.json"
+SORTIFY_CONFIG_PRESERVED=false
+if [ "$SORTIFY_INSTALLED_CONFIG" != "$MODPATH/config.json" ] && [ -f "$SORTIFY_INSTALLED_CONFIG" ]; then
+    SORTIFY_CONFIG="$SORTIFY_INSTALLED_CONFIG"
+    sortify_config_refresh
+    sortify_config_load
+    if [ -z "$SORTIFY_CONFIG_WARNING" ] && cp -f "$SORTIFY_INSTALLED_CONFIG" "$MODPATH/config.json"; then
+        SORTIFY_CONFIG_PRESERVED=true
+    else
+        ui_print "- Existing config is unreadable. Using defaults."
+    fi
+    SORTIFY_CONFIG="$MODPATH/config.json"
+fi
+
 sortify_config_refresh
 sortify_config_validate_current_schema
 BASE_PATH=$(sortify_config_get_string "base_path" "$SORTIFY_DEFAULT_BASE_PATH")
 BASE_PATH=$(sortify_normalize_dir "$BASE_PATH")
 
+if [ "$SORTIFY_CONFIG_PRESERVED" = "true" ]; then
+    ui_print "- Existing settings preserved"
+    if [ -n "$SORTIFY_CONFIG_WARNING" ]; then
+        ui_print "- Some new options use defaults until saved in WebUI"
+    fi
+fi
+
 ui_print "- Creating folders at: $BASE_PATH"
-sortify_create_category_dirs "$BASE_PATH"
+if ! sortify_create_category_dirs "$BASE_PATH"; then
+    ui_print "- Skipped: base_path must be inside internal storage"
+fi
 
 ui_print "- Setting permissions..."
 set_perm_recursive "$MODPATH" 0 0 0755 0644
@@ -74,20 +99,30 @@ ui_print "  Auto-sorts downloaded files into"
 ui_print "  Documents, Images, Videos, Audio,"
 ui_print "  Archives, Apps, Magisk, and Others."
 ui_print ""
-ui_print "  Enable auto-sorting after reboot?"
-ui_print "  Vol UP   = Enable"
-ui_print "  Vol DOWN = Disable"
-ui_print "  Default  = Disabled"
-ui_print ""
-
-ENABLE_MODULE="false"
-if chooseport 30; then
-    ui_print "- Auto-sorting enabled"
-    ENABLE_MODULE="true"
+if [ "$SORTIFY_CONFIG_PRESERVED" = "true" ]; then
+    ENABLE_MODULE=$(sortify_config_get_bool "enabled" "$SORTIFY_DEFAULT_ENABLED")
+    if [ "$ENABLE_MODULE" = "true" ]; then
+        ui_print "  Auto-sorting: enabled (kept from config)"
+    else
+        ui_print "  Auto-sorting: disabled (kept from config)"
+    fi
+    ui_print "  Change it anytime in WebUI."
 else
-    ui_print "- Auto-sorting disabled"
-fi
+    ui_print "  Enable auto-sorting after reboot?"
+    ui_print "  Vol UP   = Enable"
+    ui_print "  Vol DOWN = Disable"
+    ui_print "  Default  = Disabled"
+    ui_print ""
 
-sortify_config_set_enabled "$ENABLE_MODULE"
+    ENABLE_MODULE="false"
+    if chooseport 30; then
+        ui_print "- Auto-sorting enabled"
+        ENABLE_MODULE="true"
+    else
+        ui_print "- Auto-sorting disabled"
+    fi
+
+    sortify_config_set_enabled "$ENABLE_MODULE"
+fi
 
 ui_print "========================================="

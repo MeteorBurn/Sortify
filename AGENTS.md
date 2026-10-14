@@ -134,7 +134,8 @@ Main script that performs file sorting. Current behavior includes:
 - Automatic Magisk module detection by checking for `module.prop` in ZIP archives
 - Special `Magisk/` folder for modules
 - Recursive search with depth control (`recursive`, `max_depth`)
-- Automatic `base_path` exclusion if it's inside `download_path`
+- Automatic `base_path` exclusion if it's inside `download_path` (only category folders are skipped when `base_path` equals or contains `download_path`)
+- Path guard: refuses to run (exit 1) unless both paths are inside `/sdcard` (`SORTIFY_STORAGE_ROOT`), outside `Android/`, without `.`/`..`, and `download_path` is not the storage root
 - Custom exclusions via `exclude_folders` array
 - Category toggles via `enabled_categories`
 
@@ -155,6 +156,7 @@ Duplicates/: files with conflicting names
 - Hidden files (starting with `.`)
 - Temporary files (`.crdownload`, `.partial`, `.tmp`)
 - Files in excluded folders
+- The `sortify.log` copy in `base_path`
 
 **Key Functions:**
 - `get_json_value()` - parsing values from config.json
@@ -178,7 +180,8 @@ Duplicates/: files with conflicting names
 ### 5. **customize.sh** - Installer
 - Runs during module installation via Magisk Manager
 - Reads `version` and `versionCode` from `module.prop` for installer output
-- Creates folder structure in `base_path`
+- On update, copies the installed `/data/adb/modules/sortify/config.json` into the new module and skips the volume-key prompt
+- Creates folder structure in `base_path` (only if it passes the path guard)
 - Sets script permissions (0755)
 - Shows information about configuration and new features
 
@@ -194,12 +197,13 @@ Duplicates/: files with conflicting names
 Single-page web interface for full module management via KsuWebUI or WebUI X.
 
 **Main Sections:**
-- **Module Status** - Enable/disable toggle and manual sort button
+- **Module Status** - Enable/disable switch, schedule summary, last sort time, and manual sort button
 - **General Settings** - Configure interval, paths, recursion, depth, and open internal-storage folder picker
 - **Folder Exclusions** - Manage excluded folders (multiline textarea)
 - **File Categories** - Enable/disable sorting for each supported category and view supported extensions
 - **Sortify Log** - 🆕 Live log viewing with Refresh/Clear buttons
-- **Debug Info** - Hidden debug panel (display: none)
+- **Debug Info** - Hidden debug panel (`hidden` attribute)
+- **Save Bar** - Fixed bottom bar with Save button and unsaved-changes state
 - **Theme** - Cyber Blue Coral palette via CSS custom properties in `:root`
 
 **Technical Details:**
@@ -207,7 +211,10 @@ Single-page web interface for full module management via KsuWebUI or WebUI X.
 - **Config Saving:** Heredoc with `cat > file << 'EOFCONFIG'` for safe writing
 - **Log Loading:** Uses `tail -n 200 | base64 | tr -d '\n'` so WebUI receives complete multiline output
 - **Manual Sorting:** Uses `ksu.exec` to log wrapper start/completion lines and run `action.sh`
-- **Folder Picker:** Lists directories via `find`, restricted to `/sdcard` and `/storage/emulated/0`
+- **Folder Picker:** `<dialog>` bottom sheet; lists directories via `find`, restricted to `/sdcard` and `/storage/emulated/0`, hides `Android/`
+- **Path Validation:** `storagePathError()` mirrors `sortify_is_safe_storage_path` in `common.sh`; paths are saved in `/sdcard/...` form
+- **Manual Sort Result:** The wrapper prints `__SORTIFY_EXIT__<code>` because `ksu.exec` returns stdout only
+- **Insets:** Loads `https://mui.kernelsu.org/internal/insets.css` (served locally by KernelSU/WebUI X) and uses `--window-inset-*`
 - **ksu.exec API:** All operations run through KernelSU/WebUI shell bridge
 - **Responsive Design:** Adaptive design with dark theme
 - **Auto-scroll:** Logs automatically scroll to bottom

@@ -35,7 +35,9 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * **⌨️ Volume Key Setup:** Choose enable/disable during installation (Vol UP/DOWN)
 * **🧾 Versioned Installer Output:** Installation log reads the installed version from `module.prop`
 * **⚙️ Advanced Configuration:** Interval, paths, recursion, depth, exclusions - all in WebUI
-* **🎨 Cyber Blue Coral UI:** Responsive dark theme optimized for mobile
+* **🎨 Cyber Blue Coral UI:** Responsive dark theme optimized for mobile, with switches, a sticky save bar, and a bottom-sheet folder picker
+* **🔒 Safe Paths:** Sorting only runs inside internal storage (`/sdcard`), never in `Android/`
+* **♻️ Settings Kept on Update:** Updating the module keeps your `config.json`
 * **📱 KsuWebUI/WebUI X:** Works natively without separate web server
 * **🐛 Debug Panel:** Hidden debug info for troubleshooting (optional)
 
@@ -45,7 +47,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 
 1.  Download `Sortify-v4.3.2-vc28-magisk.zip` from [Releases](https://github.com/MeteorBurn/Sortify/releases)
 2.  Flash through **Magisk** or **KernelSU**
-3.  **🆕 Choose during installation:**
+3.  **🆕 Choose during the first installation** (updates keep your settings and skip this step):
     * Press **Vol UP** to enable module immediately
     * Press **Vol DOWN** (or wait 30s) to keep disabled
 4.  Reboot your device
@@ -66,14 +68,16 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 ### Settings available:
 
 **🔌 Module Status:**
-* **Enable Auto-Sorting** - Master on/off switch
-* **Sort Now** - Immediately run sorting and write manual start/completion lines to the log
+* **Auto-sorting** - Master on/off switch (applied after **Save**)
+* **Sort Now** - Immediately run sorting with the saved settings and write manual start/completion lines to the log
+* **Status / Last sort** - Header pill shows the saved state, the card shows the last completed sort from the log
 
 **⚙️ General Settings:**
 * **Sort Interval** - How often to scan (seconds). Default: 3600s
 * **Base Path** - Where to create sorted folders. Default: `/sdcard/Sortify`
 * **Download Path** - Where to scan for files. Default: `/sdcard/Download`
 * **Folder Picker** - Select paths from internal shared storage (`/sdcard` / `/storage/emulated/0`); manual path entry remains available
+* **Path rules** - Both paths must be inside `/sdcard` and outside `Android/`; Download Path cannot be `/sdcard` itself. Base Path may be the Download Path, inside it, or a parent of it
 * **Recursive Scanning** - Enable subfolder scanning
 * **Max Depth** - How deep to scan (if recursive). Default: 5
 
@@ -112,6 +116,13 @@ You can force a sort immediately without waiting for the timer:
 ---
 
 ## 🧾 Changelog
+
+### Unreleased - MeteorBurn
+* **🐛 Base Path above Download Path:** Files are sorted again when Base Path is a parent of Download Path (e.g. `/sdcard`)
+* **🐛 Log Copy Loop:** `sortify.log` copied into Base Path is no longer sorted into `Others/` / `Duplicates/` when Base Path equals Download Path
+* **♻️ Settings Kept on Update:** Installer carries the existing `config.json` over; the volume-key prompt is shown only on first install
+* **🔒 Path Guard:** Sorting refuses paths outside `/sdcard`, inside `Android/`, with `.`/`..`, or a Download Path equal to `/sdcard`
+* **🎨 WebUI Redesign:** Switch toggles, interval presets, inline path validation, sticky save bar with unsaved-changes state, bottom-sheet folder picker, colored log, last-sort time, in-app confirm dialog, version read from `module.prop`
 
 ### Fork v4.3.2 (2026-06-14) - MeteorBurn
 * **🎨 Cyber Blue Coral Theme:** Reworked WebUI palette from purple to blue/coral accents
