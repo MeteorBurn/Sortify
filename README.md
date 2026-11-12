@@ -10,7 +10,7 @@
 
 Sortify is a powerful **Magisk / KernelSU** module that automatically organizes files in your `/sdcard/Download/` folder into categorized subfolders.
 
-**🆕 This fork adds:** Native WebUI with full control, category toggles, Cyber Blue Coral theme, manual sorting, internal-storage folder picker, live log viewer, volume key setup, and enable/disable toggle.
+**🆕 This fork adds:** Native WebUI with full control, category toggles, manual sorting, internal-storage folder picker, live log viewer, volume key setup, and enable/disable toggle.
 
 ---
 
@@ -33,11 +33,10 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * **📁 Folder Picker:** Pick Base Path and Download Path from internal shared storage only
 * **📂 File Categories:** Enable or disable sorting for each file category directly from WebUI
 * **⌨️ Volume Key Setup:** Choose enable/disable during installation (Vol UP/DOWN)
-* **🎨 Cyber Blue Coral UI:** Responsive dark theme optimized for mobile, with switches, a sticky save bar, and a bottom-sheet folder picker
+* **🎨 Mobile-first Dark UI:** Status card shaped like a folder, color-coded categories, a save bar that appears on unsaved changes, and a bottom-sheet folder picker
 * **🔒 Safe Paths:** Sorting only runs inside internal storage (`/sdcard`), never in `Android/`
 * **♻️ Settings Kept on Update:** Updating the module keeps your `config.json`
 * **📱 KsuWebUI/WebUI X:** Works natively without separate web server
-* **🐛 Debug Panel:** Hidden debug info for troubleshooting (optional)
 
 ---
 
@@ -68,7 +67,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 **🔌 Module Status:**
 * **Auto-sorting** - Master on/off switch (applied after **Save**, no reboot needed)
 * **Sort Now** - Immediately run sorting with the saved settings and write manual start/completion lines to the log
-* **Status / Last sort** - Header pill shows the saved state, the card shows the last completed sort from the log
+* **Status / Last sort** - The tab on the status card shows the saved state, the card shows the last completed sort from the log
 
 **⚙️ General Settings:**
 * **Sort Interval** - How often to scan (seconds), with presets from 15 min to 24 h. Default: 3600s, minimum: 10s
@@ -84,7 +83,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * Default: WhatsApp, Music, Screenshots
 
 **📋 Sortify Log:**
-* **Live viewer** showing last 200 lines
+* **Live viewer** showing last 200 lines, grouped by date, with a colored category tag on every moved file
 * **Refresh** button to update
 * **Clear** button to wipe log
 * **Log copy** is kept at `<Base Path>/sortify.log`
@@ -116,6 +115,8 @@ You can force a sort immediately without waiting for the timer:
 ## 🧾 Changelog
 
 ### Unreleased - MeteorBurn
+* **🗂️ New WebUI Look:** Graphite and label-yellow theme, folder-tab status card, one color per category reused for its tag in the log, log grouped by date
+* **🧹 WebUI Cleanup:** Removed the hidden debug panel and unused path helpers; categories are rendered from one list
 * **🧹 Shell Cleanup:** Smaller `common.sh` / `action.sh` / `service.sh` with the same sorting behavior and less work per file
 * **🔒 Minimum Interval:** The service treats an interval below 10 seconds as 10 (same limit as the WebUI)
 * **📋 Quieter Log:** Removed the `Cycle done.` and "Config is missing current Sortify keys" lines

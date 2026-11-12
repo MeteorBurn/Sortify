@@ -45,16 +45,16 @@ Sortify is a Magisk / KernelSU module that moves files from a download folder in
 
 **Service (`service.sh`).** Disabled: re-reads the config every 30 seconds. Enabled: sleeps `interval` seconds (minimum 10), re-reads the config, runs `action.sh`. `enabled` therefore takes effect without a reboot.
 
-**Log.** `sortify.log` in the module directory, trimmed to the last 200 lines and copied to `base_path` at the end of each run. The WebUI colors lines by their text (`Moved:`, `Duplicate:`, `Sort completed`, ...) and reads the last-sort time from `Sort completed`, so changing a log message means checking `logLineClass` and `updateLastSort` in `index.html`.
+**Log.** `sortify.log` in the module directory, trimmed to the last 200 lines and copied to `base_path` at the end of each run. The WebUI parses lines by their text (`Moved: <file> -> <Category>`, `Duplicate:`, error words) and reads the last-sort time from `Sort completed`, so changing a log message means checking `logRow` and `loadLog` in `index.html`.
 
 ## ⚠️ Things that are duplicated
 
 Change these together:
-- **Defaults:** `config.json`, `SORTIFY_DEFAULT_*` in `common.sh`, `DEFAULT_*` in `index.html`
-- **Categories and extensions:** `classify_file` in `action.sh`, the category blocks and `DEFAULT_ENABLED_CATEGORIES` in `index.html`, the list in `README.md`
+- **Defaults:** `config.json`, `SORTIFY_DEFAULT_*` in `common.sh`, `DEFAULT_CONFIG` in `index.html`
+- **Categories and extensions:** `classify_file` in `action.sh`, the `CATEGORIES` list in `index.html`, the list in `README.md`
 - **Path rules:** `sortify_is_safe_storage_path` in `common.sh` and `storagePathError` in `index.html`
 
-To add an extension, add it to the matching `case` branch in `classify_file`. To add a category, add its folder to `SORTIFY_CATEGORY_DIRS` in `common.sh` (the config key is the lowercased folder name), a branch in `classify_file`, the key in `config.json` and a toggle in `index.html`.
+To add an extension, add it to the matching `case` branch in `classify_file`. To add a category, add its folder to `SORTIFY_CATEGORY_DIRS` in `common.sh` (the config key is the lowercased folder name), a branch in `classify_file`, the key in `config.json` and an entry in `CATEGORIES` in `index.html`.
 
 ## 🐚 Shell rules
 
