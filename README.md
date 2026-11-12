@@ -118,6 +118,8 @@ You can force a sort immediately without waiting for the timer:
 ## 🧾 Changelog
 
 ### Unreleased - MeteorBurn
+* **🧹 Shell Cleanup:** Smaller `common.sh` / `action.sh` / `service.sh` with the same sorting behavior; the "Config is missing current Sortify keys" log line is gone
+* **🔒 Minimum Interval:** The service treats an interval below 10 seconds as 10 (same limit as the WebUI)
 * **🐛 Base Path above Download Path:** Files are sorted again when Base Path is a parent of Download Path (e.g. `/sdcard`)
 * **🐛 Log Copy Loop:** `sortify.log` copied into Base Path is no longer sorted into `Others/` / `Duplicates/` when Base Path equals Download Path
 * **♻️ Settings Kept on Update:** Installer carries the existing `config.json` over; the volume-key prompt is shown only on first install
