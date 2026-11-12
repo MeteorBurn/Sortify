@@ -20,14 +20,16 @@ MAX_DEPTH=$(sortify_config_get_number "max_depth" "$SORTIFY_DEFAULT_MAX_DEPTH")
 DOWNLOAD_PATH=$(sortify_normalize_dir "$DOWNLOAD_PATH")
 BASE_PATH=$(sortify_normalize_dir "$BASE_PATH")
 
-CATEGORY_DOCUMENTS=$(sortify_config_get_category_bool "documents" "true")
-CATEGORY_IMAGES=$(sortify_config_get_category_bool "images" "true")
-CATEGORY_VIDEOS=$(sortify_config_get_category_bool "videos" "true")
-CATEGORY_AUDIO=$(sortify_config_get_category_bool "audio" "true")
-CATEGORY_ARCHIVES=$(sortify_config_get_category_bool "archives" "true")
-CATEGORY_APPS=$(sortify_config_get_category_bool "apps" "true")
-CATEGORY_MAGISK=$(sortify_config_get_category_bool "magisk" "true")
-CATEGORY_OTHERS=$(sortify_config_get_category_bool "others" "true")
+# Space-separated folder names of the enabled categories, plus the same state for the log.
+ENABLED_CATEGORIES=""
+CATEGORY_STATE=""
+for sortify_category in $SORTIFY_CATEGORY_DIRS; do
+    [ "$sortify_category" = "Duplicates" ] && continue
+    sortify_key=$(echo "$sortify_category" | tr 'A-Z' 'a-z')
+    sortify_state=$(sortify_config_get_category_bool "$sortify_key" "true")
+    CATEGORY_STATE="$CATEGORY_STATE $sortify_category=$sortify_state"
+    [ "$sortify_state" = "true" ] && ENABLED_CATEGORIES="$ENABLED_CATEGORIES $sortify_category"
+done
 
 EXCLUDE_FOLDERS=$(sortify_config_get_array "exclude_folders")
 
@@ -37,56 +39,28 @@ else
     DEPTH_OPT="-maxdepth 1"
 fi
 
-log_categories() {
-    sortify_log_msg "Enabled categories: Documents=$CATEGORY_DOCUMENTS Images=$CATEGORY_IMAGES Videos=$CATEGORY_VIDEOS Audio=$CATEGORY_AUDIO Archives=$CATEGORY_ARCHIVES Apps=$CATEGORY_APPS Magisk=$CATEGORY_MAGISK Others=$CATEGORY_OTHERS"
-}
-
-get_file_ext() {
-    sortify_filename=$(basename "$1")
-    case "$sortify_filename" in
-        *.*) echo "${sortify_filename##*.}" | tr 'A-Z' 'a-z' ;;
-        *) echo "" ;;
-    esac
-}
-
 is_magisk_module() {
     command -v unzip >/dev/null 2>&1 || return 1
     unzip -l "$1" 2>/dev/null | grep -q "module.prop$"
 }
 
-is_excluded_folder_name() {
-    sortify_check_name="$1"
+# True when any segment of the path below download_path is an excluded folder name.
+is_excluded_path() {
     [ -n "$EXCLUDE_FOLDERS" ] || return 1
+    sortify_relative_path=${1#"$DOWNLOAD_PATH"/}
 
-    sortify_saved_ifs_exclude=$IFS
+    sortify_saved_ifs=$IFS
     IFS='
 '
     for sortify_excluded_name in $EXCLUDE_FOLDERS; do
-        if [ "$sortify_check_name" = "$sortify_excluded_name" ]; then
-            IFS=$sortify_saved_ifs_exclude
-            return 0
-        fi
+        case "/$sortify_relative_path/" in
+            */"$sortify_excluded_name"/*)
+                IFS=$sortify_saved_ifs
+                return 0
+                ;;
+        esac
     done
-    IFS=$sortify_saved_ifs_exclude
-    return 1
-}
-
-is_excluded_path() {
-    sortify_file_path="$1"
-    case "$sortify_file_path" in
-        "$DOWNLOAD_PATH"/*) sortify_relative_path=${sortify_file_path#"$DOWNLOAD_PATH"/} ;;
-        *) return 0 ;;
-    esac
-
-    sortify_saved_ifs_path=$IFS
-    IFS='/'
-    for sortify_path_segment in $sortify_relative_path; do
-        if is_excluded_folder_name "$sortify_path_segment"; then
-            IFS=$sortify_saved_ifs_path
-            return 0
-        fi
-    done
-    IFS=$sortify_saved_ifs_path
+    IFS=$sortify_saved_ifs
     return 1
 }
 
@@ -115,119 +89,80 @@ is_in_output_path() {
 }
 
 should_skip_file() {
-    sortify_file_path="$1"
-    sortify_filename=$(basename "$sortify_file_path")
-
-    case "$sortify_filename" in
+    case "${1##*/}" in
         .*|*.crdownload|*.partial|*.tmp) return 0 ;;
     esac
 
-    is_in_output_path "$sortify_file_path" && return 0
-    is_excluded_path "$sortify_file_path" && return 0
+    is_in_output_path "$1" && return 0
+    is_excluded_path "$1" && return 0
 
     return 1
 }
 
+# Sets sortify_category to the category folder for the file.
 classify_file() {
-    sortify_file_path="$1"
-    sortify_ext=$(get_file_ext "$sortify_file_path")
-
+    sortify_ext=""
+    case "${1##*/}" in
+        *.*) sortify_ext=${1##*.} ;;
+    esac
     case "$sortify_ext" in
-        pdf|doc|docx|txt|xls|xlsx|ppt|pptx|csv)
-            [ "$CATEGORY_DOCUMENTS" = "true" ] && echo "Documents"
-            return
-            ;;
-        jpg|jpeg|png|gif|bmp|webp|heic|heif|svg)
-            [ "$CATEGORY_IMAGES" = "true" ] && echo "Images"
-            return
-            ;;
-        mp4|mkv|avi|mov|webm|flv|mpeg|mpg|3gp)
-            [ "$CATEGORY_VIDEOS" = "true" ] && echo "Videos"
-            return
-            ;;
-        mp3|m4a|flac|wav|ogg|opus|aac|wma)
-            [ "$CATEGORY_AUDIO" = "true" ] && echo "Audio"
-            return
-            ;;
-        zip)
-            if is_magisk_module "$sortify_file_path"; then
-                [ "$CATEGORY_MAGISK" = "true" ] && echo "Magisk"
-            else
-                [ "$CATEGORY_ARCHIVES" = "true" ] && echo "Archives"
-            fi
-            return
-            ;;
-        rar|7z|tar|gz|bz2|iso)
-            [ "$CATEGORY_ARCHIVES" = "true" ] && echo "Archives"
-            return
-            ;;
-        apk|xapk|apks)
-            [ "$CATEGORY_APPS" = "true" ] && echo "Apps"
-            return
-            ;;
+        *[A-Z]*) sortify_ext=$(echo "$sortify_ext" | tr 'A-Z' 'a-z') ;;
     esac
 
-    [ "$CATEGORY_OTHERS" = "true" ] && echo "Others"
+    case "$sortify_ext" in
+        pdf|doc|docx|txt|xls|xlsx|ppt|pptx|csv) sortify_category="Documents" ;;
+        jpg|jpeg|png|gif|bmp|webp|heic|heif|svg) sortify_category="Images" ;;
+        mp4|mkv|avi|mov|webm|flv|mpeg|mpg|3gp) sortify_category="Videos" ;;
+        mp3|m4a|flac|wav|ogg|opus|aac|wma) sortify_category="Audio" ;;
+        zip)
+            if is_magisk_module "$1"; then
+                sortify_category="Magisk"
+            else
+                sortify_category="Archives"
+            fi
+            ;;
+        rar|7z|tar|gz|bz2|iso) sortify_category="Archives" ;;
+        apk|xapk|apks) sortify_category="Apps" ;;
+        *) sortify_category="Others" ;;
+    esac
 }
 
 unique_duplicate_path() {
-    sortify_filename="$1"
-    sortify_candidate="$BASE_PATH/Duplicates/$sortify_filename"
-
-    if [ ! -e "$sortify_candidate" ]; then
-        echo "$sortify_candidate"
-        return
-    fi
-
-    case "$sortify_filename" in
+    sortify_stem=$1
+    sortify_ext=""
+    case "$1" in
         *.*)
-            sortify_stem=${sortify_filename%.*}
-            sortify_ext=${sortify_filename##*.}
-            ;;
-        *)
-            sortify_stem=$sortify_filename
-            sortify_ext=""
+            sortify_stem=${1%.*}
+            sortify_ext=${1##*.}
+            [ -n "$sortify_ext" ] && sortify_ext=".$sortify_ext"
             ;;
     esac
 
-    sortify_suffix=1
-    while :; do
-        if [ -n "$sortify_ext" ]; then
-            sortify_candidate="$BASE_PATH/Duplicates/$sortify_stem-$sortify_suffix.$sortify_ext"
-        else
-            sortify_candidate="$BASE_PATH/Duplicates/$sortify_stem-$sortify_suffix"
-        fi
-
-        if [ ! -e "$sortify_candidate" ]; then
-            echo "$sortify_candidate"
-            return
-        fi
-
+    sortify_candidate="$BASE_PATH/Duplicates/$1"
+    sortify_suffix=0
+    while [ -e "$sortify_candidate" ]; do
         sortify_suffix=$((sortify_suffix + 1))
+        sortify_candidate="$BASE_PATH/Duplicates/$sortify_stem-$sortify_suffix$sortify_ext"
     done
+    echo "$sortify_candidate"
 }
 
 move_to_category() {
-    sortify_category="$1"
-    sortify_file_path="$2"
-    sortify_filename=$(basename "$sortify_file_path")
-    sortify_dest_dir="$BASE_PATH/$sortify_category"
-    sortify_dest_path="$sortify_dest_dir/$sortify_filename"
+    sortify_filename=${2##*/}
+    sortify_dest_path="$BASE_PATH/$1/$sortify_filename"
+    sortify_done="Moved: $sortify_filename -> $1"
+    sortify_failed="Failed to move: $sortify_filename -> $1"
 
     if [ -e "$sortify_dest_path" ]; then
         sortify_dest_path=$(unique_duplicate_path "$sortify_filename")
-        if mv -f "$sortify_file_path" "$sortify_dest_path"; then
-            sortify_log_msg "Duplicate: $sortify_filename -> Duplicates/$(basename "$sortify_dest_path")"
-        else
-            sortify_log_msg "Failed to move duplicate: $sortify_filename"
-        fi
-        return
+        sortify_done="Duplicate: $sortify_filename -> Duplicates/${sortify_dest_path##*/}"
+        sortify_failed="Failed to move duplicate: $sortify_filename"
     fi
 
-    if mv -f "$sortify_file_path" "$sortify_dest_dir/"; then
-        sortify_log_msg "Moved: $sortify_filename -> $sortify_category"
+    if mv -f "$2" "$sortify_dest_path"; then
+        sortify_log_msg "$sortify_done"
     else
-        sortify_log_msg "Failed to move: $sortify_filename -> $sortify_category"
+        sortify_log_msg "$sortify_failed"
     fi
 }
 
@@ -249,24 +184,21 @@ if [ "$SORTIFY_PATHS_OK" != "true" ]; then
 fi
 
 sortify_create_category_dirs "$BASE_PATH"
-log_categories
+sortify_log_msg "Enabled categories:$CATEGORY_STATE"
 
-if [ ! -d "$DOWNLOAD_PATH" ]; then
+if [ -d "$DOWNLOAD_PATH" ]; then
+    find "$DOWNLOAD_PATH" $DEPTH_OPT -type f 2>/dev/null | while IFS= read -r sortify_file; do
+        should_skip_file "$sortify_file" && continue
+
+        classify_file "$sortify_file"
+        case " $ENABLED_CATEGORIES " in
+            *" $sortify_category "*) move_to_category "$sortify_category" "$sortify_file" ;;
+        esac
+    done
+    sortify_log_msg "Sort completed"
+else
     sortify_log_msg "Download path missing: $DOWNLOAD_PATH"
-    sortify_rotate_log
-    sortify_copy_log_to_base "$BASE_PATH"
-    exit 0
 fi
 
-find "$DOWNLOAD_PATH" $DEPTH_OPT -type f 2>/dev/null | while IFS= read -r sortify_file; do
-    should_skip_file "$sortify_file" && continue
-
-    sortify_category=$(classify_file "$sortify_file")
-    [ -n "$sortify_category" ] || continue
-
-    move_to_category "$sortify_category" "$sortify_file"
-done
-
-sortify_log_msg "Sort completed"
 sortify_rotate_log
 sortify_copy_log_to_base "$BASE_PATH"
