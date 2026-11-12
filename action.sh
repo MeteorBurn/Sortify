@@ -31,10 +31,6 @@ CATEGORY_OTHERS=$(sortify_config_get_category_bool "others" "true")
 
 EXCLUDE_FOLDERS=$(sortify_config_get_array "exclude_folders")
 
-case "$MAX_DEPTH" in
-    ""|*[!0-9]*) MAX_DEPTH="$SORTIFY_DEFAULT_MAX_DEPTH" ;;
-esac
-
 if [ "$RECURSIVE" = "true" ]; then
     DEPTH_OPT="-maxdepth $MAX_DEPTH"
 else
@@ -220,8 +216,6 @@ move_to_category() {
 
     if [ -e "$sortify_dest_path" ]; then
         sortify_dest_path=$(unique_duplicate_path "$sortify_filename")
-        sortify_dest_dir=$(dirname "$sortify_dest_path")
-        mkdir -p "$sortify_dest_dir"
         if mv -f "$sortify_file_path" "$sortify_dest_path"; then
             sortify_log_msg "Duplicate: $sortify_filename -> Duplicates/$(basename "$sortify_dest_path")"
         else
@@ -230,7 +224,6 @@ move_to_category() {
         return
     fi
 
-    mkdir -p "$sortify_dest_dir"
     if mv -f "$sortify_file_path" "$sortify_dest_dir/"; then
         sortify_log_msg "Moved: $sortify_filename -> $sortify_category"
     else

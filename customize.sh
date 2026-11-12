@@ -84,13 +84,6 @@ if ! sortify_create_category_dirs "$BASE_PATH"; then
     ui_print "- Skipped: base_path must be inside internal storage"
 fi
 
-ui_print "- Setting permissions..."
-set_perm_recursive "$MODPATH" 0 0 0755 0644
-set_perm "$MODPATH/service.sh" 0 0 0755
-set_perm "$MODPATH/action.sh" 0 0 0755
-set_perm "$MODPATH/common.sh" 0 0 0755
-set_perm "$MODPATH/uninstall.sh" 0 0 0755
-
 ui_print ""
 ui_print "========================================="
 ui_print "  Sortify v${MODULE_VERSION} (vc${MODULE_VERSION_CODE})"

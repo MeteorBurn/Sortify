@@ -67,7 +67,7 @@ sortify_config_has_key() {
 
 sortify_config_category_object() {
     sortify_config_load
-    echo "$SORTIFY_CONFIG_TEXT" | sed -n 's/.*"enabled_categories"[[:space:]]*:[[:space:]]*{\([^}]*\)}.*/\1/p' | head -n 1
+    echo "$SORTIFY_CONFIG_TEXT" | sed -n 's/.*"enabled_categories"[[:space:]]*:[[:space:]]*{\([^}]*\)}.*/\1/p'
 }
 
 sortify_config_has_category_key() {
@@ -105,7 +105,7 @@ sortify_config_validate_current_schema() {
 
 sortify_config_get_string() {
     sortify_config_load
-    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -n 1)
+    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p")
     if [ -n "$sortify_value" ]; then
         printf '%s\n' "$sortify_value"
     else
@@ -115,7 +115,7 @@ sortify_config_get_string() {
 
 sortify_config_get_number() {
     sortify_config_load
-    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p" | head -n 1)
+    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p")
     if [ -n "$sortify_value" ]; then
         printf '%s\n' "$sortify_value"
     else
@@ -125,7 +125,7 @@ sortify_config_get_number() {
 
 sortify_config_get_bool() {
     sortify_config_load
-    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([^,} ]*\).*/\1/p" | head -n 1)
+    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([^,} ]*\).*/\1/p")
     case "$sortify_value" in
         true|false) printf '%s\n' "$sortify_value" ;;
         *) printf '%s\n' "$2" ;;
@@ -134,7 +134,7 @@ sortify_config_get_bool() {
 
 sortify_config_get_category_bool() {
     sortify_category_object=$(sortify_config_category_object)
-    sortify_value=$(echo "$sortify_category_object" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([^,} ]*\).*/\1/p" | head -n 1)
+    sortify_value=$(echo "$sortify_category_object" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([^,} ]*\).*/\1/p")
     case "$sortify_value" in
         true|false) printf '%s\n' "$sortify_value" ;;
         *) printf '%s\n' "$2" ;;
@@ -143,7 +143,7 @@ sortify_config_get_category_bool() {
 
 sortify_config_get_array() {
     sortify_config_load
-    sortify_array=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\[\([^]]*\)\].*/\1/p" | head -n 1)
+    sortify_array=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\[\([^]]*\)\].*/\1/p")
     [ -n "$sortify_array" ] || return 0
     echo "$sortify_array" | tr ',' '\n' | sed 's/^[[:space:]]*"//; s/"[[:space:]]*$//; s/^[[:space:]]*//; s/[[:space:]]*$//' | grep -v '^$'
 }
@@ -151,22 +151,13 @@ sortify_config_get_array() {
 sortify_config_set_enabled() {
     sortify_enabled_value="$1"
     [ -f "$SORTIFY_CONFIG" ] || return 0
-    sed -i "s/\"enabled\"[[:space:]]*:[[:space:]]*false/\"enabled\": $sortify_enabled_value/" "$SORTIFY_CONFIG"
-    sed -i "s/\"enabled\"[[:space:]]*:[[:space:]]*true/\"enabled\": $sortify_enabled_value/" "$SORTIFY_CONFIG"
+    sed -i "s/\"enabled\"[[:space:]]*:[[:space:]]*[a-z]*/\"enabled\": $sortify_enabled_value/" "$SORTIFY_CONFIG"
 }
 
 sortify_normalize_dir() {
+    # Slashes are collapsed first, so at most one trailing slash is left to drop.
     sortify_path_value=$(printf '%s\n' "$1" | sed 's#//*#/#g')
-    if [ -z "$sortify_path_value" ]; then
-        printf '%s\n' ""
-        return
-    fi
-
-    while [ "$sortify_path_value" != "/" ]; do
-        sortify_trimmed_path=${sortify_path_value%/}
-        [ "$sortify_trimmed_path" = "$sortify_path_value" ] && break
-        sortify_path_value="$sortify_trimmed_path"
-    done
+    [ "$sortify_path_value" = "/" ] || sortify_path_value=${sortify_path_value%/}
 
     # Use one spelling for internal storage so base/download paths can be compared.
     case "$sortify_path_value" in
