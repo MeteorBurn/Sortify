@@ -6,7 +6,7 @@
 
 **Original Author:** [xCaptaiN09](https://github.com/xCaptaiN09)  
 **Fork by:** [MeteorBurn](https://github.com/MeteorBurn)  
-**Version:** 4.3.2 (versionCode 28)
+**Version:** 4.4.0 (versionCode 29)
 
 Sortify is a powerful **Magisk / KernelSU** module that automatically organizes files in your `/sdcard/Download/` folder into categorized subfolders.
 
@@ -25,7 +25,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 * **🚫 Folder Exclusions:** Skips specific folders like WhatsApp, Music, Screenshots
 * **🪶 Lightweight:** 100% offline, uses native system resources
 
-### 🆕 New in Fork v4.3.2 (MeteorBurn):
+### 🆕 New in Fork v4.4.0 (MeteorBurn):
 * **🌐 Enhanced WebUI:** Full-featured web interface with all settings: interval, paths, recursion, depth, exclusions
 * **📋 Live Log Viewer:** View sorting activity logs in real-time with refresh/clear buttons
 * **🔌 Enable/Disable Toggle:** Turn auto-sorting on/off without rebooting
@@ -42,7 +42,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 
 ## 🧩 Installation
 
-1.  Download `Sortify-v4.3.2-vc28-magisk.zip` from [Releases](https://github.com/MeteorBurn/Sortify/releases)
+1.  Download `Sortify-v4.4.0-vc29-magisk.zip` from [Releases](https://github.com/MeteorBurn/Sortify/releases)
 2.  Flash through **Magisk** or **KernelSU**
 3.  **🆕 Choose during the first installation** (updates keep your settings and skip this step):
     * Press **Vol UP** to enable module immediately
@@ -54,7 +54,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 
 ## ⚙️ Configuration (WebUI)
 
-**Sortify v4.3.2 Fork** features a complete web interface for all settings!
+**Sortify v4.4.0 Fork** features a complete web interface for all settings!
 
 ### How to access:
 1.  Open **KernelSU Manager** (or **WebUI X** app)
@@ -114,7 +114,7 @@ You can force a sort immediately without waiting for the timer:
 
 ## 🧾 Changelog
 
-### Unreleased - MeteorBurn
+### Fork v4.4.0 (2026-11-12) - MeteorBurn
 * **🗂️ New WebUI Look:** Graphite and label-yellow theme, folder-tab status card, one color per category reused for its tag in the log, log grouped by date
 * **🧹 WebUI Cleanup:** Removed the hidden debug panel and unused path helpers; categories are rendered from one list
 * **🧹 Shell Cleanup:** Smaller `common.sh` / `action.sh` / `service.sh` with the same sorting behavior and less work per file
@@ -176,7 +176,7 @@ You can force a sort immediately without waiting for the timer:
 ## 🧡 Credits
 
 * **Original Module:** [xCaptaiN09](https://github.com/xCaptaiN09) - Sortify v4.0
-* **Fork Maintainer:** [MeteorBurn](https://github.com/MeteorBurn) - v4.3.2
+* **Fork Maintainer:** [MeteorBurn](https://github.com/MeteorBurn) - v4.4.0
 * **Powered by:** BusyBox, Android Shell, KernelSU WebUI
 
 [![GitHub release](https://img.shields.io/github/v/release/MeteorBurn/Sortify)](https://github.com/MeteorBurn/Sortify/releases)
