@@ -18,23 +18,21 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 
 ### Core Sorting Features:
 * **⚡ Automatic Sorting:** Runs automatically in the background
-* **📂 Smart Categories:** Sorts Documents, Images, Videos, Audio, Archives, Apps, Magisk modules
+* **📂 Smart Categories:** Sorts Documents, Images, Videos, Audio, Archives, Apps, Magisk modules, and Others
 * **🛡️ Integrity Protection:** Skips hidden/incomplete files (`.crdownload`, `.partial`, `.tmp`)
-* **🗂️ Duplicate Detection:** Automatically moves duplicate files to `/sdcard/Sortify/Duplicates`
+* **🗂️ Duplicate Detection:** Files whose name already exists in the target folder go to `/sdcard/Sortify/Duplicates`
 * **♻️ Recursive Scanning:** Scans subfolders with configurable depth
 * **🚫 Folder Exclusions:** Skips specific folders like WhatsApp, Music, Screenshots
 * **🪶 Lightweight:** 100% offline, uses native system resources
 
 ### 🆕 New in Fork v4.3.2 (MeteorBurn):
-* **🌐 Enhanced WebUI:** Full-featured web interface with all settings
+* **🌐 Enhanced WebUI:** Full-featured web interface with all settings: interval, paths, recursion, depth, exclusions
 * **📋 Live Log Viewer:** View sorting activity logs in real-time with refresh/clear buttons
-* **🔌 Enable/Disable Toggle:** Turn module on/off without rebooting
+* **🔌 Enable/Disable Toggle:** Turn auto-sorting on/off without rebooting
 * **⚡ Manual Sort:** Run sorting immediately from WebUI without waiting for the timer
 * **📁 Folder Picker:** Pick Base Path and Download Path from internal shared storage only
 * **📂 File Categories:** Enable or disable sorting for each file category directly from WebUI
 * **⌨️ Volume Key Setup:** Choose enable/disable during installation (Vol UP/DOWN)
-* **🧾 Versioned Installer Output:** Installation log reads the installed version from `module.prop`
-* **⚙️ Advanced Configuration:** Interval, paths, recursion, depth, exclusions - all in WebUI
 * **🎨 Cyber Blue Coral UI:** Responsive dark theme optimized for mobile, with switches, a sticky save bar, and a bottom-sheet folder picker
 * **🔒 Safe Paths:** Sorting only runs inside internal storage (`/sdcard`), never in `Android/`
 * **♻️ Settings Kept on Update:** Updating the module keeps your `config.json`
@@ -51,7 +49,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
     * Press **Vol UP** to enable module immediately
     * Press **Vol DOWN** (or wait 30s) to keep disabled
 4.  Reboot your device
-5.  Open WebUI to configure (if enabled) or enable module first
+5.  Open WebUI to configure the module or enable auto-sorting later
 
 ---
 
@@ -68,28 +66,28 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 ### Settings available:
 
 **🔌 Module Status:**
-* **Auto-sorting** - Master on/off switch (applied after **Save**)
+* **Auto-sorting** - Master on/off switch (applied after **Save**, no reboot needed)
 * **Sort Now** - Immediately run sorting with the saved settings and write manual start/completion lines to the log
 * **Status / Last sort** - Header pill shows the saved state, the card shows the last completed sort from the log
 
 **⚙️ General Settings:**
-* **Sort Interval** - How often to scan (seconds). Default: 3600s
+* **Sort Interval** - How often to scan (seconds), with presets from 15 min to 24 h. Default: 3600s, minimum: 10s
 * **Base Path** - Where to create sorted folders. Default: `/sdcard/Sortify`
 * **Download Path** - Where to scan for files. Default: `/sdcard/Download`
 * **Folder Picker** - Select paths from internal shared storage (`/sdcard` / `/storage/emulated/0`); manual path entry remains available
 * **Path rules** - Both paths must be inside `/sdcard` and outside `Android/`; Download Path cannot be `/sdcard` itself. Base Path may be the Download Path, inside it, or a parent of it
 * **Recursive Scanning** - Enable subfolder scanning
-* **Max Depth** - How deep to scan (if recursive). Default: 5
+* **Max Depth** - How deep to scan (if recursive), 1-10. Default: 5
 
 **🚫 Folder Exclusions:**
-* List of folders to skip (one per line)
+* List of folder names to skip (one per line), matched at any depth
 * Default: WhatsApp, Music, Screenshots
 
 **📋 Sortify Log:**
 * **Live viewer** showing last 200 lines
 * **Refresh** button to update
 * **Clear** button to wipe log
-* **Manual sorting logs** show WebUI start/completion lines plus normal `action.sh` output
+* **Log copy** is kept at `<Base Path>/sortify.log`
 
 **📂 File Categories:**
 * Category toggles for Documents, Images, Videos, Audio, Archives, Apps, Magisk modules, and Others
@@ -118,8 +116,9 @@ You can force a sort immediately without waiting for the timer:
 ## 🧾 Changelog
 
 ### Unreleased - MeteorBurn
-* **🧹 Shell Cleanup:** Smaller `common.sh` / `action.sh` / `service.sh` with the same sorting behavior; the "Config is missing current Sortify keys" log line is gone
+* **🧹 Shell Cleanup:** Smaller `common.sh` / `action.sh` / `service.sh` with the same sorting behavior and less work per file
 * **🔒 Minimum Interval:** The service treats an interval below 10 seconds as 10 (same limit as the WebUI)
+* **📋 Quieter Log:** Removed the `Cycle done.` and "Config is missing current Sortify keys" lines
 * **🐛 Base Path above Download Path:** Files are sorted again when Base Path is a parent of Download Path (e.g. `/sdcard`)
 * **🐛 Log Copy Loop:** `sortify.log` copied into Base Path is no longer sorted into `Others/` / `Duplicates/` when Base Path equals Download Path
 * **♻️ Settings Kept on Update:** Installer carries the existing `config.json` over; the volume-key prompt is shown only on first install
