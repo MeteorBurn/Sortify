@@ -115,7 +115,7 @@ You can force a sort immediately without waiting for the timer:
 ## 🧾 Changelog
 
 ### Fork v4.4.0 (2026-11-12) - MeteorBurn
-* **🗂️ New WebUI Look:** Graphite and label-yellow theme, folder-tab status card, one color per category reused for its tag in the log, log grouped by date
+* **🗂️ New WebUI Look:** Graphite and label-yellow theme, folder-tab status card, an icon and a color per category (the color is reused for its tag in the log), log grouped by date
 * **🧹 WebUI Cleanup:** Removed the hidden debug panel and unused path helpers; categories are rendered from one list
 * **🧹 Shell Cleanup:** Smaller `common.sh` / `action.sh` / `service.sh` with the same sorting behavior and less work per file
 * **🔒 Minimum Interval:** The service treats an interval below 10 seconds as 10 (same limit as the WebUI)
