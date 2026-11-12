@@ -19,7 +19,7 @@ if (-not $version -or -not $versionCode) {
     throw 'module.prop must contain version and versionCode.'
 }
 
-$archiveName = "Sortify-v$version-vc$versionCode-magisk.zip"
+$archiveName = "Sortify-v$version.zip"
 $archivePath = Join-Path $distDir $archiveName
 $stageDir = Join-Path ([IO.Path]::GetTempPath()) ('sortify-stage-' + [guid]::NewGuid().ToString('N'))
 $verifyDir = Join-Path ([IO.Path]::GetTempPath()) ('sortify-verify-' + [guid]::NewGuid().ToString('N'))

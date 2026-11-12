@@ -42,7 +42,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 
 ## 🧩 Installation
 
-1.  Download `Sortify-v4.4.0-vc29-magisk.zip` from [Releases](https://github.com/MeteorBurn/Sortify/releases)
+1.  Download `Sortify-v4.4.0.zip` from [Releases](https://github.com/MeteorBurn/Sortify/releases)
 2.  Flash through **Magisk** or **KernelSU**
 3.  **🆕 Choose during the first installation** (updates keep your settings and skip this step):
     * Press **Vol UP** to enable module immediately

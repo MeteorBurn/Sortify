@@ -66,7 +66,7 @@ Scripts run under Android's `sh` / BusyBox `ash`:
 
 ## 📦 Building the ZIP
 
-Run `scripts/build-module.ps1` (needs `7z`). It stages the install files in a temp folder, converts text files to LF, zips them at the archive root and verifies the result. Output: `dist/Sortify-v<version>-vc<versionCode>-magisk.zip`.
+Run `scripts/build-module.ps1` (needs `7z`). It stages the install files in a temp folder, converts text files to LF, zips them at the archive root and verifies the result. Output: `dist/Sortify-v<version>.zip`. The file name is only a label: Magisk and KernelSU read `id`, `version` and `versionCode` from `module.prop` inside the archive, so `versionCode` must still grow with every release.
 
 - The ZIP contains only `module.prop`, the five `.sh` files, `config.json`, `banner.png` and `webroot/index.html`
 - Shell files with CRLF line endings break installation; never zip the Windows working tree directly or with `Compress-Archive`
