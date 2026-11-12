@@ -8,7 +8,7 @@ MOD_DIR="$TMP_DIR/module"
 DOWNLOAD_DIR="$TMP_DIR/download"
 BASE_DIR="$TMP_DIR/output"
 
-# action.sh only touches paths inside the storage root; point it at the sandbox.
+# sort.sh only touches paths inside the storage root; point it at the sandbox.
 SORTIFY_STORAGE_ROOT="$TMP_DIR"
 export SORTIFY_STORAGE_ROOT
 
@@ -37,7 +37,7 @@ mkdir -p "$MOD_DIR" "$DOWNLOAD_DIR" "$BASE_DIR" \
     "$DOWNLOAD_DIR/nested/work" \
     "$DOWNLOAD_DIR/magisk-src"
 
-cp "$ROOT_DIR/action.sh" "$MOD_DIR/action.sh"
+cp "$ROOT_DIR/sort.sh" "$MOD_DIR/sort.sh"
 [ -f "$ROOT_DIR/common.sh" ] && cp "$ROOT_DIR/common.sh" "$MOD_DIR/common.sh"
 
 cat > "$MOD_DIR/config.json" <<EOFCONFIG
@@ -85,7 +85,7 @@ printf 'ordinary\n' > "$DOWNLOAD_DIR/ordinary.txt"
 )
 rm -rf "$DOWNLOAD_DIR/magisk-src" "$DOWNLOAD_DIR/ordinary.txt"
 
-sh "$MOD_DIR/action.sh"
+sh "$MOD_DIR/sort.sh"
 
 assert_file "$DOWNLOAD_DIR/report.pdf"
 assert_file "$DOWNLOAD_DIR/nested/KeepMe/secret.jpg"
@@ -99,12 +99,12 @@ assert_no_file "$BASE_DIR/Documents/report.pdf"
 assert_no_file "$BASE_DIR/Others/report.pdf"
 assert_no_file "$BASE_DIR/Images/secret.jpg"
 
-# Runs action.sh twice (the second run catches re-sorting of Sortify's own files).
+# Runs sort.sh twice (the second run catches re-sorting of Sortify's own files).
 # Usage: run_paths_case <name> <base_path> <download_path>; exit codes go to CASE_RC.
 run_paths_case() {
     case_mod="$TMP_DIR/cases/$1"
     mkdir -p "$case_mod" "$3"
-    cp "$ROOT_DIR/action.sh" "$ROOT_DIR/common.sh" "$case_mod/"
+    cp "$ROOT_DIR/sort.sh" "$ROOT_DIR/common.sh" "$case_mod/"
     cat > "$case_mod/config.json" <<EOFCASE
 {
     "enabled": true,
@@ -128,8 +128,8 @@ run_paths_case() {
 EOFCASE
     printf 'case\n' > "$3/case.jpg"
     CASE_RC=0
-    sh "$case_mod/action.sh" || CASE_RC=$?
-    sh "$case_mod/action.sh" || CASE_RC=$?
+    sh "$case_mod/sort.sh" || CASE_RC=$?
+    sh "$case_mod/sort.sh" || CASE_RC=$?
 }
 
 # base_path is a parent of download_path.

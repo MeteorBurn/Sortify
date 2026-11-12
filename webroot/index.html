@@ -768,7 +768,7 @@
         const LOG_PATH = MODULE_DIR + "/sortify.log";
         const MIN_INTERVAL = 10;
         const STORAGE_ALIASES = ["/storage/emulated/0", "/storage/self/primary"];
-        // key, folder name, what goes there, color, icon. Keep in sync with classify_file in action.sh.
+        // key, folder name, what goes there, color, icon. Keep in sync with classify_file in sort.sh.
         const CATEGORIES = [
             ['documents', 'Documents', 'pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv', '#7fb2ff', 'i-doc'],
             ['images', 'Images', 'jpg, jpeg, png, gif, bmp, webp, heic, heif, svg', '#7ad6a0', 'i-image'],
@@ -886,7 +886,7 @@
         const isAndroidDir = path => /^\/sdcard\/android(\/|$)/i.test(path);
         const parentPath = path => (path === '/sdcard' ? path : path.slice(0, path.lastIndexOf('/')));
 
-        // Mirrors sortify_is_safe_storage_path in common.sh; action.sh refuses anything else.
+        // Mirrors sortify_is_safe_storage_path in common.sh; sort.sh refuses anything else.
         function storagePathError(rawValue, isDownloadPath) {
             if (!(rawValue || '').trim()) {
                 return '';
@@ -1190,7 +1190,7 @@
                     `MODDIR=${shellQuote(MODULE_DIR)}`,
                     `LOG=${shellQuote(LOG_PATH)}`,
                     'echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort requested from WebUI." >> "$LOG"',
-                    'sh "$MODDIR/action.sh" >> "$LOG" 2>&1',
+                    'sh "$MODDIR/sort.sh" >> "$LOG" 2>&1',
                     'code=$?',
                     'if [ "$code" -eq 0 ]; then echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort completed from WebUI." >> "$LOG"; else echo "[$(date \'+%Y-%m-%d %H:%M:%S\')] Manual sort failed from WebUI. Exit code: $code" >> "$LOG"; fi',
                     'echo "__SORTIFY_EXIT__$code"'

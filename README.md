@@ -62,6 +62,8 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 3.  Find **Sortify**
 4.  Tap the **Settings / Globe Icon** 🌐
 
+**Magisk** has no built-in WebUI: install **WebUI X** or **KsuWebUI Standalone**, then tap the **Action** button on the Sortify card to open it.
+
 ### Settings available:
 
 **🔌 Module Status:**
@@ -99,8 +101,7 @@ Sortify is a powerful **Magisk / KernelSU** module that automatically organizes 
 
 You can force a sort immediately without waiting for the timer:
 * **WebUI:** Tap **Sort Now** in Module Status.
-* **Magisk/KSU App:** Tap the **Action** button on the module card.
-* **Terminal:** Run `su -c sh /data/adb/modules/sortify/action.sh`
+* **Terminal:** Run `su -c sh /data/adb/modules/sortify/sort.sh`
 
 ---
 
@@ -115,9 +116,10 @@ You can force a sort immediately without waiting for the timer:
 ## 🧾 Changelog
 
 ### Fork v4.4.0 (2026-11-12) - MeteorBurn
+* **🚀 WebUI from Magisk:** The **Action** button now opens the WebUI in WebUI X or KsuWebUI Standalone instead of running a sort; sorting moved to `sort.sh`
 * **🗂️ New WebUI Look:** Graphite and label-yellow theme, folder-tab status card, an icon and a color per category (the color is reused for its tag in the log), log grouped by date
 * **🧹 WebUI Cleanup:** Removed the hidden debug panel and unused path helpers; categories are rendered from one list
-* **🧹 Shell Cleanup:** Smaller `common.sh` / `action.sh` / `service.sh` with the same sorting behavior and less work per file
+* **🧹 Shell Cleanup:** Smaller `common.sh` / `sort.sh` / `service.sh` with the same sorting behavior and less work per file
 * **🔒 Minimum Interval:** The service treats an interval below 10 seconds as 10 (same limit as the WebUI)
 * **📋 Quieter Log:** Removed the `Cycle done.` and "Config is missing current Sortify keys" lines
 * **🐛 Base Path above Download Path:** Files are sorted again when Base Path is a parent of Download Path (e.g. `/sdcard`)

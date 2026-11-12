@@ -44,7 +44,7 @@ done
 
             # Re-read: the module may have been disabled while sleeping.
             read_service_config
-            [ "$ENABLED" = "true" ] && sh "$MODDIR/action.sh" >> "$SORTIFY_LOG" 2>&1
+            [ "$ENABLED" = "true" ] && sh "$MODDIR/sort.sh" >> "$SORTIFY_LOG" 2>&1
         else
             if [ "$LAST_ENABLED_STATE" != "false" ]; then
                 sortify_log_msg "Module disabled in config. Waiting..."
