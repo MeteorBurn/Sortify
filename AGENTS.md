@@ -12,354 +12,79 @@
 
 ---
 
-## 📋 Repository Purpose
+## 📋 What this is
 
-**Sortify** is a Magisk and KernelSU module for Android that automatically sorts downloaded files into categorized folders. The module runs in the background and periodically scans the download folder, moving files to appropriate categories based on their extensions.
+Sortify is a Magisk / KernelSU module that moves files from a download folder into category folders by extension. It is a fork of xCaptaiN09's Sortify (MIT). Features, user-facing settings and the changelog live in `README.md`; the current version lives in `module.prop`. Do not copy either into this file.
 
-### 🔱 Fork Information
-**Original Author:** xCaptaiN09 (Sortify v4.0)  
-**Fork:** MeteorBurn (v4.3.2)
-**License:** MIT  
-**Current Version:** 4.3.2 (versionCode: 28)
+## 🏗️ Files
 
-### Inherited Core Sorting Features
-- ✅ Automatic file sorting by type (documents, images, videos, audio, archives, apps)
-- ✅ ZIP-based Magisk module detection (`module.prop` inside archive)
-- ✅ Recursive subfolder scanning with configurable depth
-- ✅ Automatic target folder exclusion to prevent sorting loops
-- ✅ Configurable folder exclusions via JSON configuration
-- ✅ Duplicate file handling via `Duplicates/`
-- ✅ Hidden and incomplete download protection
+| File | Role |
+|------|------|
+| `module.prop` | Module metadata; the only source of `version` / `versionCode` |
+| `config.json` | Default settings shipped with the module |
+| `common.sh` | Shared helpers: defaults, config getters, path normalization and guard, category folders, logging |
+| `action.sh` | One sort run. Called by `service.sh`, the manager's Action button and the WebUI "Sort now" button |
+| `service.sh` | Boot service: waits for `/sdcard`, then loops |
+| `customize.sh` | Installer: keeps the existing config on update, asks enable/disable with volume keys on first install |
+| `uninstall.sh` | Writes an uninstall note to the log copy in `base_path`, stops Sortify processes |
+| `webroot/index.html` | Single-file WebUI (KsuWebUI / WebUI X), talks to the shell through `ksu.exec` |
+| `tests/sortify-behavior.sh` | Smoke test for `action.sh`; needs `7z` and `unzip` |
+| `scripts/build-module.ps1` | Builds the install ZIP into `dist/` |
 
-### 🆕 Current Fork Features (v4.3.2):
-- ✅ **Native WebUI** - Full-featured WebUI for KsuWebUI/WebUI X
-- ✅ **Enable/Disable Toggle** - Control module operation without rebooting
-- ✅ **Manual Sort Button** - Run sorting immediately from WebUI without waiting for the timer
-- ✅ **Internal Storage Folder Picker** - Pick Base Path and Download Path from user-accessible shared storage only
-- ✅ **Live Log Viewer** - Read, refresh, and clear the last 200 log lines
-- ✅ **Configurable File Categories** - Enable/disable sorting per category directly from WebUI
-- ✅ **Cyber Blue Coral WebUI Theme** - Dark blue UI with blue/coral action accents
-- ✅ **Volume Key Setup** - Enable/disable module during installation
-- ✅ **Versioned Installer Output** - Installation log reads version/versionCode from `module.prop`
-- ✅ **Enhanced Config Loading** - Reliable multiline JSON reading via `tr '\n' ' '`
-- ✅ **Proven Volume Key Detection** - Tested implementation adapted from Bootloop Protector
+## 🔧 How it works
 
----
+**Config.** `common.sh` reads `config.json` as one line of text and extracts values with `sed`; there is no JSON parser. Every getter takes a default, so a missing key is not an error. Keys: `enabled`, `interval`, `base_path`, `download_path`, `recursive`, `max_depth`, `enabled_categories` (object of booleans), `exclude_folders` (array of folder names).
 
-## 🏗️ Repository Structure
+**Path guard.** `sortify_is_safe_storage_path` only accepts paths inside `/sdcard`, outside `Android/`, without `.` / `..`. `action.sh` exits with 1 if either path fails it or if `download_path` is `/sdcard` itself. `/storage/emulated/0` and `/storage/self/primary` are rewritten to `/sdcard`. `SORTIFY_STORAGE_ROOT` overrides the root for tests only.
 
-```
-Sortify/
-├── module.prop          # Magisk module metadata (version, description, author)
-├── config.json          # Module configuration (paths, intervals, settings, enabled)
-├── common.sh            # Shared POSIX helpers for config, logging, and category folders
-├── service.sh           # Main service (runs on Android boot)
-├── action.sh            # File sorting logic (called by service.sh)
-├── customize.sh         # Installation script with volume key detection
-├── uninstall.sh         # Module uninstallation script
-├── scripts/
-│   └── build-module.ps1 # Reproducible ZIP builder with LF normalization
-├── tests/
-│   └── sortify-behavior.sh # Local shell smoke test for sorting behavior
-├── webroot/             # 🆕 WebUI interface
-│   └── index.html       # Single-page web interface for configuration
-├── banner.png           # Module banner image
-├── LICENSE              # MIT license
-├── README.md            # Module documentation
-├── AGENTS.md            # Developer guide
-└── .git/                # Git repository
-```
+**Sorting (`action.sh`).** One `find` over `download_path` (depth 1, or `max_depth` when `recursive`). For each file:
+1. Skip hidden files, `.crdownload` / `.partial` / `.tmp`, anything already in a category folder, and any path with a segment listed in `exclude_folders`.
+2. `classify_file` picks the category from the lowercased extension. A `.zip` containing `module.prop` goes to `Magisk`, any other `.zip` to `Archives`, unknown extensions to `Others`.
+3. A file whose category is disabled stays where it is.
+4. If the name already exists in the target folder, the file goes to `Duplicates/` as `name-N.ext`.
 
----
+**Service (`service.sh`).** Disabled: re-reads the config every 30 seconds. Enabled: sleeps `interval` seconds (minimum 10), re-reads the config, runs `action.sh`. `enabled` therefore takes effect without a reboot.
 
-## 📂 Files and Components Structure
+**Log.** `sortify.log` in the module directory, trimmed to the last 200 lines and copied to `base_path` at the end of each run. The WebUI colors lines by their text (`Moved:`, `Duplicate:`, `Sort completed`, ...) and reads the last-sort time from `Sort completed`, so changing a log message means checking `logLineClass` and `updateLastSort` in `index.html`.
 
-### 1. **module.prop** - Module Manifest
-- Defines module ID, name, version, and description
-- Used by Magisk/KernelSU for module identification and display
-- **Key fields:**
-  - `id=sortify` - unique identifier
-  - `version=4.3.2` - displayed version
-  - `versionCode=28` - numeric version code for updates
-  - `author=xCaptaiN09` - module author
+## ⚠️ Things that are duplicated
 
-### 2. **config.json** - Configuration
-Configuration file for module behavior:
-```json
-{
-    "enabled": false,                 // 🆕 Enable/disable module (disabled by default)
-    "interval": 3600,                 // Scan interval in seconds
-    "base_path": "/sdcard/Sortify",   // Where to sort files
-    "download_path": "/sdcard/Download", // Where to take files from
-    "recursive": true,                // Recursive scanning
-    "max_depth": 5,                   // Maximum scan depth
-    "enabled_categories": {           // Enabled sorting categories
-        "documents": true,
-        "images": true,
-        "videos": true,
-        "audio": true,
-        "archives": true,
-        "apps": true,
-        "magisk": true,
-        "others": true
-    },
-    "exclude_folders": ["WhatsApp", "Music", "Screenshots"] // Excluded folders
-}
-```
+Change these together:
+- **Defaults:** `config.json`, `SORTIFY_DEFAULT_*` in `common.sh`, `DEFAULT_*` in `index.html`
+- **Categories and extensions:** `classify_file` in `action.sh`, the category blocks and `DEFAULT_ENABLED_CATEGORIES` in `index.html`, the list in `README.md`
+- **Path rules:** `sortify_is_safe_storage_path` in `common.sh` and `storagePathError` in `index.html`
 
-**Current defaults and behavior:**
-- `enabled=false` keeps auto-sorting disabled until installation choice or WebUI toggle
-- `interval=3600` gives a one-hour default scan interval for battery saving
-- `base_path=/sdcard/Sortify` is the sorted output root
-- `download_path=/sdcard/Download` is the source folder
-- `enabled_categories` defaults all sortable categories to enabled
-- `exclude_folders` skips common user folders by name
+To add an extension, add it to the matching `case` branch in `classify_file`. To add a category, add its folder to `SORTIFY_CATEGORY_DIRS` in `common.sh` (the config key is the lowercased folder name), a branch in `classify_file`, the key in `config.json` and a toggle in `index.html`.
 
-### 3. **service.sh** - Background Service
-- Runs automatically on Android boot
-- Waits for storage readiness (`/sdcard`)
-- Works in infinite loop with configurable interval
-- Parses `config.json` and exports variables for `action.sh`
-- Maintains log (`sortify.log`) with automatic rotation (last 200 lines)
-- Copies log to `base_path` for easy access
+## 🐚 Shell rules
 
-**Key functions:**
-- `get_json_value()` - parsing string and numeric values from JSON
-- `get_json_bool()` - parsing boolean values
-- `wait_until_storage()` - waiting for storage mount
+Scripts run under Android's `sh` / BusyBox `ash`:
+- POSIX only: no arrays, `[[ ]]`, `+=`
+- Read file lists with `find ... | while IFS= read -r`, never `for f in $(find ...)`
+- Prefer parameter expansion (`${path##*/}`) over `basename` / `dirname` inside the per-file loop
+- Helper variables are global; prefix them with `sortify_`
 
-### 4. **action.sh** - Sorting Logic
-Main script that performs file sorting. Current behavior includes:
+## 📦 Building the ZIP
 
-- Automatic Magisk module detection by checking for `module.prop` in ZIP archives
-- Special `Magisk/` folder for modules
-- Recursive search with depth control (`recursive`, `max_depth`)
-- Automatic `base_path` exclusion if it's inside `download_path` (only category folders are skipped when `base_path` equals or contains `download_path`)
-- Path guard: refuses to run (exit 1) unless both paths are inside `/sdcard` (`SORTIFY_STORAGE_ROOT`), outside `Android/`, without `.`/`..`, and `download_path` is not the storage root
-- Custom exclusions via `exclude_folders` array
-- Category toggles via `enabled_categories`
+Run `scripts/build-module.ps1` (needs `7z`). It stages the install files in a temp folder, converts text files to LF, zips them at the archive root and verifies the result. Output: `dist/Sortify-v<version>-vc<versionCode>-magisk.zip`.
 
-**File Categories:**
+- The ZIP contains only `module.prop`, the five `.sh` files, `config.json`, `banner.png` and `webroot/index.html`
+- Shell files with CRLF line endings break installation; never zip the Windows working tree directly or with `Compress-Archive`
+- A new install file must be added to both lists in `build-module.ps1`
+
+## 🐛 Debugging on a device
+
 ```bash
-Documents/ : pdf, doc, docx, txt, xls, xlsx, ppt, pptx, csv
-Images/    : jpg, jpeg, png, gif, bmp, webp, heic, heif, svg
-Videos/    : mp4, mkv, avi, mov, webm, flv, mpeg, mpg, 3gp
-Audio/     : mp3, m4a, flac, wav, ogg, opus, aac, wma
-Archives/  : zip, rar, 7z, tar, gz, bz2, iso (except Magisk modules)
-Apps/      : apk, xapk, apks
-Magisk/    : zip files with module.prop inside
-Others/    : all other files
-Duplicates/: files with conflicting names
+cat /data/adb/modules/sortify/sortify.log     # log (copy in <base_path>/sortify.log)
+cat /data/adb/modules/sortify/config.json     # active config
+su -c sh /data/adb/modules/sortify/action.sh  # run one sort now
+ps aux | grep sortify                         # is the service alive
 ```
-
-**Excluded Files:**
-- Hidden files (starting with `.`)
-- Temporary files (`.crdownload`, `.partial`, `.tmp`)
-- Files in excluded folders
-- The `sortify.log` copy in `base_path`
-
-**Key Functions:**
-- `get_json_value()` - parsing values from config.json
-- `get_json_bool()` - parsing boolean values
-- `get_json_array()` - parsing arrays from config.json
-- `is_magisk_module()` - checking ZIP file for module.prop
-- `log_msg()` - logging with timestamp
-- `move_files()` - moving files with duplicate handling
-
-**Algorithm:**
-1. Read configuration from `config.json`
-2. Build exclusion list (auto + custom)
-3. Create folder structure in `base_path`
-4. Sequential sorting by categories:
-   - Documents → Images → Videos → Audio
-   - ZIP files (check for Magisk modules) → Magisk/
-   - Archives → Apps
-   - Remaining files → Others
-5. Handle duplicates (move to `Duplicates/`)
-
-### 5. **customize.sh** - Installer
-- Runs during module installation via Magisk Manager
-- Reads `version` and `versionCode` from `module.prop` for installer output
-- On update, copies the installed `/data/adb/modules/sortify/config.json` into the new module and skips the volume-key prompt
-- Creates folder structure in `base_path` (only if it passes the path guard)
-- Sets script permissions (0755)
-- Shows information about configuration and new features
-
-### 6. **uninstall.sh** - Uninstaller
-- Runs during module removal
-- Stops background processes (`pkill -f sortify`)
-- By default does NOT delete sorted files (commented out)
-- Logs removal to `sortify.log`
-
-### 7. **webroot/index.html** - 🆕 Native WebUI
-**New feature from MeteorBurn fork!**
-
-Single-page web interface for full module management via KsuWebUI or WebUI X.
-
-**Main Sections:**
-- **Module Status** - Enable/disable switch, schedule summary, last sort time, and manual sort button
-- **General Settings** - Configure interval, paths, recursion, depth, and open internal-storage folder picker
-- **Folder Exclusions** - Manage excluded folders (multiline textarea)
-- **File Categories** - Enable/disable sorting for each supported category and view supported extensions
-- **Sortify Log** - 🆕 Live log viewing with Refresh/Clear buttons
-- **Debug Info** - Hidden debug panel (`hidden` attribute)
-- **Save Bar** - Fixed bottom bar with Save button and unsaved-changes state
-- **Theme** - Cyber Blue Coral palette via CSS custom properties in `:root`
-
-**Technical Details:**
-- **Config Loading:** Uses `cat | tr '\n' ' '` to read multiline JSON
-- **Config Saving:** Heredoc with `cat > file << 'EOFCONFIG'` for safe writing
-- **Log Loading:** Uses `tail -n 200 | base64 | tr -d '\n'` so WebUI receives complete multiline output
-- **Manual Sorting:** Uses `ksu.exec` to log wrapper start/completion lines and run `action.sh`
-- **Folder Picker:** `<dialog>` bottom sheet; lists directories via `find`, restricted to `/sdcard` and `/storage/emulated/0`, hides `Android/`
-- **Path Validation:** `storagePathError()` mirrors `sortify_is_safe_storage_path` in `common.sh`; paths are saved in `/sdcard/...` form
-- **Manual Sort Result:** The wrapper prints `__SORTIFY_EXIT__<code>` because `ksu.exec` returns stdout only
-- **Insets:** Loads `https://mui.kernelsu.org/internal/insets.css` (served locally by KernelSU/WebUI X) and uses `--window-inset-*`
-- **ksu.exec API:** All operations run through KernelSU/WebUI shell bridge
-- **Responsive Design:** Adaptive design with dark theme
-- **Auto-scroll:** Logs automatically scroll to bottom
-- **Scrollbar:** min-height: 400px, max-height: 600px, overflow-y: scroll
-
-**Benefits:**
-- No separate web server required
-- Works entirely in KSU WebUI/WebUI X
-- Instant changes without reboot (for `enabled` parameter)
-- Manual sort button logs wrapper start/completion lines and the normal `action.sh` sorting log output
-- Manual path entry remains available even though picker is limited to user-accessible shared storage
-- Convenient log viewing without ADB
-
----
-
-## 🔧 Development and Modification
-
-### Testing Changes
-1. Modify necessary scripts (`action.sh`, `service.sh`)
-2. Create module ZIP archive with correct structure
-3. Install via Magisk Manager
-4. Check logs at `/data/adb/modules/sortify/sortify.log`
-
-### Building Magisk / KernelSU ZIP
-After changing module behavior, scripts, WebUI, config defaults, or adding functionality, build a fresh installable archive immediately after the edits. Use the current `module.prop` `version` and `versionCode` for the archive name unless the user explicitly requested a version change.
-
-Installable archives are sensitive to Android shell formatting:
-- ✅ Build from a temporary staging folder, not directly from the Windows working tree
-- ✅ Normalize all text files to Unix LF before archiving (`.sh`, `.json`, `.html`, `module.prop`)
-- ✅ Use a minimal root-level archive structure:
-  - `module.prop`
-  - `service.sh`
-  - `action.sh`
-  - `common.sh`
-  - `customize.sh`
-  - `uninstall.sh`
-  - `config.json`
-  - `banner.png`
-  - `webroot/index.html`
-- ✅ Use `7z` or another ZIP tool that preserves this simple root layout
-- ❌ Do not include `.git`, `AGENTS.md`, `README.md`, `LICENSE`, or a parent folder in the install ZIP
-- ❌ Do not create the install ZIP directly from CRLF-normalized Windows files
-
-**Known issue:** PowerShell `Compress-Archive` can produce a ZIP that looks valid locally but fails during Magisk/Kitsune extraction or script execution if shell files contain CRLF line endings. Before release, verify:
-```powershell
-7z t dist\Sortify-v4.3.2-vc28-magisk.zip
-# Then extract/check all text files: CRLF count must be 0
-```
-
-### Adding New File Categories
-1. Open `action.sh`
-2. Add new extension to appropriate variable (e.g., `DOC_EXT`)
-3. Or create new category:
-   ```bash
-   NEW_EXT="ext1 ext2 ext3"
-   mkdir -p "$BASE_PATH/NewCategory"
-   move_files "$BASE_PATH/NewCategory" $NEW_EXT
-   ```
-
-### Modifying Sorting Logic
-- Main logic is in `move_files()` function in `action.sh`
-- Use `find` command with filters to search for files
-- Handle exclusions via `EXCLUDE_LIST` check
-- Log important actions via `log_msg()`
-
-### Android Busybox Compatibility
-Scripts use only basic POSIX shell commands:
-- `find`, `grep`, `sed`, `cut`, `tr`, `mv`, `mkdir`
-- Avoid bash-specific constructs (arrays, `[[`, `+=`)
-- Use simple `while read` loops instead of `for file in $(find ...)`
-
----
-
-## 🐛 Debugging
-
-### Check Logs
-```bash
-# Via adb
-adb shell cat /data/adb/modules/sortify/sortify.log
-
-# Or in target folder
-cat /sdcard/Sortify/sortify.log
-```
-
-### Check Configuration
-```bash
-cat /data/adb/modules/sortify/config.json
-```
-
-### Manual Sorting Run
-```bash
-su
-cd /data/adb/modules/sortify
-sh action.sh
-```
-
-### Check Process
-```bash
-ps aux | grep sortify
-```
-
-
----
-
-## 📝 Version History
-
-### MeteorBurn Fork:
-- **v4.3.2 (versionCode 28)** - WebUI layout polish
-  - Added Cyber Blue Coral WebUI palette
-  - Added File Categories enable/disable controls
-  - Installer output reads version and versionCode from module.prop
-  - Moved recursive scanning controls into General Settings
-  - Restored always-visible File Categories below exclusions
-  - Removed default-disabled warning text from Module Status
-  - Removed purple gradient from Base Path and Download Path picker buttons
-- **v4.3.1 (versionCode 27)** - WebUI convenience update
-  - Manual Sort button in Module Status
-  - Internal-storage-only folder picker for Base Path and Download Path
-  - Collapsible File Categories section
-  - Updated default interval to 3600 seconds
-- **v4.3.0 (versionCode 26)** - 🆕 Fork by MeteorBurn
-  - Native WebUI with full module management
-  - Live log viewer with clear functionality
-  - Volume key setup during installation (Vol UP/DOWN)
-  - `enabled` parameter for enabling/disabling
-  - Fixed JSON reading via `tr '\n' ' '`
-  - Proven volume key detection implementation from Bootloop Protector
-  - Increased log min-height to 400px with overflow-y: scroll
-  - Updated default settings: interval=1000s, exclude=[WhatsApp, Music, Screenshots]
-
-### Original versions by xCaptaiN09:
-- **v4.3.0** - Automatic Magisk module detection
-- **v4.3** - Recursive scanning, auto base_path exclusion, custom exclusions
-- **v4.2** - JSON-based configuration
-- **v4.0** - First stable release
-
----
 
 ## 🤝 Contributing
 
-When making changes:
-1. Check compatibility with Android busybox
-2. Test on real device
-3. Update `version` / `versionCode` in `module.prop` only when the user explicitly requested a version bump
-4. Build a fresh Magisk/KernelSU ZIP after code changes or new functionality
-5. Document changes in description
-6. Commit changes to `dev` branch
-7. After testing, merge to `master`
+1. Keep scripts compatible with Android BusyBox and test on a real device
+2. Update `version` / `versionCode` in `module.prop` only on an explicit request
+3. Build a fresh ZIP after code changes
+4. Document changes in description
+5. Commit to `dev`, merge to `master` after testing
