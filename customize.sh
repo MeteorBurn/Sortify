@@ -68,15 +68,12 @@ if [ "$SORTIFY_INSTALLED_CONFIG" != "$MODPATH/config.json" ] && [ -f "$SORTIFY_I
 fi
 
 sortify_config_refresh
-sortify_config_validate_current_schema
+sortify_config_load
 BASE_PATH=$(sortify_config_get_string "base_path" "$SORTIFY_DEFAULT_BASE_PATH")
 BASE_PATH=$(sortify_normalize_dir "$BASE_PATH")
 
 if [ "$SORTIFY_CONFIG_PRESERVED" = "true" ]; then
     ui_print "- Existing settings preserved"
-    if [ -n "$SORTIFY_CONFIG_WARNING" ]; then
-        ui_print "- Some new options use defaults until saved in WebUI"
-    fi
 fi
 
 ui_print "- Creating folders at: $BASE_PATH"

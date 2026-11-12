@@ -9,7 +9,7 @@ esac
 sortify_common_init "$MODDIR"
 
 sortify_config_refresh
-sortify_config_validate_current_schema
+sortify_config_load
 sortify_log_config_warning_once
 
 DOWNLOAD_PATH=$(sortify_config_get_string "download_path" "$SORTIFY_DEFAULT_DOWNLOAD_PATH")

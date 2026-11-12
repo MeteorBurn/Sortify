@@ -17,7 +17,7 @@ wait_until_storage() {
 
 read_service_config() {
     sortify_config_refresh
-    sortify_config_validate_current_schema
+    sortify_config_load
     sortify_log_config_warning_once
 
     ENABLED=$(sortify_config_get_bool "enabled" "$SORTIFY_DEFAULT_ENABLED")

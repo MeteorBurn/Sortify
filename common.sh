@@ -12,7 +12,6 @@ SORTIFY_DEFAULT_MAX_DEPTH=5
 SORTIFY_STORAGE_ROOT="${SORTIFY_STORAGE_ROOT:-/sdcard}"
 
 SORTIFY_CATEGORY_DIRS="Documents Images Videos Audio Archives Apps Magisk Others Duplicates"
-SORTIFY_CATEGORY_KEYS="documents images videos audio archives apps magisk others"
 
 sortify_common_init() {
     SORTIFY_MODDIR="$1"
@@ -60,85 +59,42 @@ sortify_config_load() {
     esac
 }
 
-sortify_config_has_key() {
-    sortify_config_load
-    echo "$SORTIFY_CONFIG_TEXT" | grep -q "\"$1\"[[:space:]]*:"
-}
-
 sortify_config_category_object() {
     sortify_config_load
     echo "$SORTIFY_CONFIG_TEXT" | sed -n 's/.*"enabled_categories"[[:space:]]*:[[:space:]]*{\([^}]*\)}.*/\1/p'
 }
 
-sortify_config_has_category_key() {
-    sortify_category_object=$(sortify_config_category_object)
-    [ -n "$sortify_category_object" ] || return 1
-    echo "$sortify_category_object" | grep -q "\"$1\"[[:space:]]*:"
+# sortify_config_value <json text> <key> <sed value pattern with one group> <default>
+sortify_config_value() {
+    sortify_value=$(echo "$1" | sed -n "s/.*\"$2\"[[:space:]]*:[[:space:]]*$3.*/\1/p")
+    printf '%s\n' "${sortify_value:-$4}"
 }
 
-sortify_config_validate_current_schema() {
-    sortify_config_load
-    [ -n "$SORTIFY_CONFIG_WARNING" ] && return
-
-    sortify_missing_key=false
-    for sortify_key in enabled interval base_path download_path recursive max_depth enabled_categories exclude_folders; do
-        if ! sortify_config_has_key "$sortify_key"; then
-            sortify_missing_key=true
-        fi
-    done
-
-    sortify_category_object=$(sortify_config_category_object)
-    if [ -z "$sortify_category_object" ]; then
-        sortify_missing_key=true
-    else
-        for sortify_key in $SORTIFY_CATEGORY_KEYS; do
-            if ! sortify_config_has_category_key "$sortify_key"; then
-                sortify_missing_key=true
-            fi
-        done
-    fi
-
-    if [ "$sortify_missing_key" = "true" ]; then
-        SORTIFY_CONFIG_WARNING="Config is missing current Sortify keys. Using defaults where needed."
-    fi
+sortify_config_bool_value() {
+    case $(sortify_config_value "$1" "$2" '\([^,} ]*\)' "$3") in
+        true) echo true ;;
+        false) echo false ;;
+        *) printf '%s\n' "$3" ;;
+    esac
 }
 
 sortify_config_get_string() {
     sortify_config_load
-    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p")
-    if [ -n "$sortify_value" ]; then
-        printf '%s\n' "$sortify_value"
-    else
-        printf '%s\n' "$2"
-    fi
+    sortify_config_value "$SORTIFY_CONFIG_TEXT" "$1" '"\([^"]*\)"' "$2"
 }
 
 sortify_config_get_number() {
     sortify_config_load
-    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p")
-    if [ -n "$sortify_value" ]; then
-        printf '%s\n' "$sortify_value"
-    else
-        printf '%s\n' "$2"
-    fi
+    sortify_config_value "$SORTIFY_CONFIG_TEXT" "$1" '\([0-9][0-9]*\)' "$2"
 }
 
 sortify_config_get_bool() {
     sortify_config_load
-    sortify_value=$(echo "$SORTIFY_CONFIG_TEXT" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([^,} ]*\).*/\1/p")
-    case "$sortify_value" in
-        true|false) printf '%s\n' "$sortify_value" ;;
-        *) printf '%s\n' "$2" ;;
-    esac
+    sortify_config_bool_value "$SORTIFY_CONFIG_TEXT" "$1" "$2"
 }
 
 sortify_config_get_category_bool() {
-    sortify_category_object=$(sortify_config_category_object)
-    sortify_value=$(echo "$sortify_category_object" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\([^,} ]*\).*/\1/p")
-    case "$sortify_value" in
-        true|false) printf '%s\n' "$sortify_value" ;;
-        *) printf '%s\n' "$2" ;;
-    esac
+    sortify_config_bool_value "$(sortify_config_category_object)" "$1" "$2"
 }
 
 sortify_config_get_array() {
